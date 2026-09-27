@@ -89,10 +89,10 @@ make_argv(char ***ret, const struct data_t *const data, int *const argc, int *co
 
 	(*ret)[i_arg++] = "-c";
 
+	*first_opt = i_arg;
+
 	if(!data->flagFile)
 		goto end;
-
-	*first_opt = i_arg;
 
 	/* get args from flagFile */
 	char *line = malloc(VALUE_SIZE / 2);
@@ -248,6 +248,11 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, char **argv,
 			goto err;
 	}
 
+	/* BUG
+	 * Remove all files of a label, then build with that label
+	 * First run will fail, as not all .o files are spotted by glob(3p)
+	 * Second run will spot them and build properly
+	 */
 	const int dir_fd = dirfd(dir);
 	FAIL(fsync(dir_fd));
 

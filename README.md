@@ -12,7 +12,7 @@ The template shall have:\
 &nbsp; **EXT**: The extension of your source files.
 
 Aditionally, the template may contain:\
-&nbsp; **FLAGFILE**: A file contaning flags provided to _CC_. One flag per line.
+&nbsp; **FLAGFILE**: A file contaning arguments provided to _CC_. One argument per line.
 
 All paths are relative to the template.
 
@@ -26,7 +26,7 @@ Using a diferent label than the one used for the last run of _cTemple_ will trig
 ### 'global' label
 _cTemple_ searchs for a _global label_ (named simply `global`) before *cur_label*. This allows —for example— to specify _SRCDIRS_ only once.\
 All keys specified in the _global label_ may be overwritten by other labels.\
-Note that _cTemple_ *does* discriminate between the _global label_ and other labels and it wont be considered if you dont specify *cur_label* (but it will be parsed).
+Note that _cTemple_ *does* discriminate between the _global label_ and other labels; it wont be considered if you dont specify *cur_label* (but it _will_ be parsed).
 
 ## Options
 _cTemple_ accepts only 3 options:\
@@ -40,8 +40,7 @@ _cTemple_ compiles the source files and leaves the resulting `.o` files inside _
 _cTemple_ will recompile source files if the corresponding `.o` file is not in _BUILDDIR_/*cur_label*/.
 
 # TODO
-Most likely almost everything. Not even sure if multiple srcdirs work.\
-Change `-f` to trigger an update of `timestamps`?
+Most likely almost everything. Not even sure if multiple srcdirs work.
 
 ## BUGS
 Lots of them.\
