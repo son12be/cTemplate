@@ -1,12 +1,12 @@
 global:
-NAME cc
-SRCDIRS src
-BUILDDIR build
-FLAGFILE compile_flags.txt
-EXT c
+  NAME cc
+  SRCDIRS src
+  BUILDDIR build
+  FLAGFILE compile_flags.txt
+  EXT c
 
 debug:
-CC clang -O0 -ggdb3 -fsanitize=address -DDEBUG
+  CC clang -O0 -ggdb3 -fsanitize=address -DDEBUG
 
 release:
-CC clang -O3 -flto=thin
+  CC cl1ang -O3 -flto=thin
