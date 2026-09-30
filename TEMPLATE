@@ -9,4 +9,4 @@ debug:
   CC clang -O0 -ggdb3 -fsanitize=address -DDEBUG
 
 release:
-  CC cl1ang -O3 -flto=thin
+  CC clang -O3 -flto=thin

@@ -1,10 +1,5 @@
 #include <string.h>
-#include <pwd.h>
-#include <unistd.h>
-#include <sys/param.h>
 #include <ctype.h>
-#include <stdarg.h>
-#include <stdio.h>
 #include <stdint.h>
 
 #include "util.h"

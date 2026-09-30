@@ -7,22 +7,15 @@
 
 
 #include <libgen.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 #include <glob.h>
 #include <limits.h>
-#include <errno.h>
 #include <string.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <pthread.h>
 #include <sys/stat.h>
 #include <semaphore.h>
-#include <sys/vfs.h>
 #include <stdlib.h>
-#include <signal.h>
 
 #include "util.h"
 #include "misc.h"
