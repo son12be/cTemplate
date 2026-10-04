@@ -143,9 +143,9 @@ destroy_argv(char ***argv, int argc, int first_opt)
 }
 
 inline static int
-has_changed(const char *const source_path, const char *const object_path)
+has_changed(const char *const source_path, const char *const object_path, const int comp_force)
 {
-  if(access(object_path, F_OK) != 0)
+  if(comp_force || access(object_path, F_OK) != 0)
     return 1;
 
   struct stat st;
@@ -196,7 +196,7 @@ exec_cc(char **argv)
 }
 
 static inline int
-compile_srcdir(const char *const srcdir, const struct data_t *data, char **argv, const int argc, int compile_anyways)
+compile_srcdir(const char *const srcdir, const struct data_t *data, char **argv, const int argc, int flags)
 {
   const DIR *dir = opendir(srcdir);
   if(!dir)
@@ -232,8 +232,10 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, char **argv,
     snprintf(outpath_end, NAME_MAX, "%s.o", basename(argv[ARGV_PATH_I]));
 
     int changed;
-    FAIL_GOTO((changed = has_changed(argv[ARGV_PATH_I], argv[ARGV_OUTPATH_I])) < 0, err);
-    if(!compile_anyways && changed == 0)
+    FAIL_GOTO(
+        (changed = has_changed(argv[ARGV_PATH_I], argv[ARGV_OUTPATH_I], flags & OPTCOMP_FORCE)) < 0,
+        err);
+    if(!changed)
       continue;
 
     if(exec_cc(argv) < 0)
@@ -260,7 +262,7 @@ err:
 }
 
 int
-compile(struct data_t *data, const int compile_anyways)
+compile(struct data_t *data, const int flags)
 {
   if(sem_init(&sem, 0, data->threads) < 0)
   {
@@ -281,7 +283,7 @@ compile(struct data_t *data, const int compile_anyways)
   /* loop through specified srcdirs */
   for(char *srcdir = strtok(data->srcdirs, " "); srcdir; srcdir = strtok(NULL, " "))
   {
-    if(compile_srcdir(srcdir, data, argv, argc, compile_anyways) < 0)
+    if(compile_srcdir(srcdir, data, argv, argc, flags) < 0)
     {
       destroy_argv(&argv, argc, first_opt);
       return -1;
@@ -324,16 +326,33 @@ compile(struct data_t *data, const int compile_anyways)
     printf("%s ", argv_cc[i]);
   printf("\n");
 
-  execvp(argv_cc[0], argv_cc);
+  const pid_t pid = fork();
+  if(pid < 0)
+  {
+    ERR(-errno, "fork() failed");
+  } else if(pid == 0)
+  {
+    execvp(argv_cc[0], argv_cc);
 
-  /* FIXME
-   * 2 mem leaks here
-   * Gotta free argv
-   */
-  ERR_NR(-errno, "Cant exec \"%s\"", argv_cc[0]);
-  argc -= file_list.gl_pathc;
-  destroy_argv(&argv_cc, argc, first_opt);
-  globfree(&file_list);
+    /* FIXME
+     * 2 mem leaks here
+     * Gotta free argv
+     */
+    ERR_NR(-errno, "Cant exec \"%s\"", argv_cc[0]);
+    argc -= file_list.gl_pathc;
+    destroy_argv(&argv_cc, argc, first_opt);
+    globfree(&file_list);
+  } else
+  {
+    argc -= file_list.gl_pathc;
+    destroy_argv(&argv_cc, argc, first_opt);
+    globfree(&file_list);
+
+    waitpid(-1, NULL, WNOHANG);
+
+    return 0;
+  }
+
 
   return -1;
 }

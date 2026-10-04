@@ -4,6 +4,9 @@
 
 #include "misc.h"
 
+#define OPTCOMP_FORCE  0b00000001
+#define OPTRUN         0b00000010
+
 #define streq(A, B) (strcmp(A, B) == 0)
 
 enum logLevel_e

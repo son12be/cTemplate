@@ -1,9 +1,13 @@
+#include <linux/limits.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <limits.h>
 
 #include "compile.h"
 #include "err.h"
+#include "util.h"
 
 /* bro meson is so much better wtf */
 
@@ -20,9 +24,9 @@ main(int argc, char **argv)
 		.flagFile = NULL,
 	};
 
-	int compile_anyways = 0;
+	uint8_t flags = 0u;
 	int opt;
-	while((opt = getopt(argc, argv, "j:fl:")) != -1)
+	while((opt = getopt(argc, argv, "j:frl:")) != -1)
 	{
 		switch(opt)
 		{
@@ -35,8 +39,11 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'f':
-				compile_anyways = 1;
+				flags |= OPTCOMP_FORCE;
 				break;
+      case 'r':
+        flags |= OPTRUN;
+        break;
 			case 'l':
 				data.label = optarg;
 				break;
@@ -50,14 +57,24 @@ main(int argc, char **argv)
 		return report_err();
 
 	// printf("%s %s %s %s %s %i\n", data.srcdirs, data.incdirs, data.builddir, data.ext, data.cc, data.threads);
-	if(compile(&data, compile_anyways) < 0)
+	if(compile(&data, flags) < 0)
 		return report_err();
 
 	/* We gotta do something about this
 	 * Maybe an fatal flag?
 	 */
 	if(get_err())
+  {
 		report_err();
+  }
+
+  if(flags & OPTRUN)
+  {
+    char path[PATH_MAX];
+    snprintf(path, sizeof(path), "./%s/%s/%s", data.builddir, data.label, data.name);
+    printf("Executing \"%s\"...\n", path);
+    return execlp(path, path);
+  }
 
 	return 0;
 }
