@@ -32,6 +32,7 @@ Note that _cTemple_ *does* discriminate between the _global label_ and other lab
 _cTemple_ accepts only 3 options:\
 &nbsp; **-jN**: Number of max parallel jobs to use, where `N` is the number.\
 &nbsp; **-f**: Dont check if file changed. Compile everything. Note that this does not trigger a `timestamps` update.\
+&nbsp; **-r**: Run the resulting binary after build process.\
 &nbsp; **-l** ***label***: Specify the *cur_label*.
 
 # How it works
