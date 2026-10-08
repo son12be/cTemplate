@@ -1,8 +1,11 @@
 #pragma once
 
 #include <stdio.h>
+#include <semaphore.h>
 
 #include "misc.h"
+
+extern sem_t sem;
 
 #define OPTCOMP_FORCE  0b00000001
 #define OPTRUN         0b00000010
@@ -31,5 +34,14 @@ struct data_t
 int
 strends(const char *A, const char *B);
 
+char *
+trim_ws(const char **s);
+
+void
+sigchld_handler(int);
+
 int
-parse_template(struct data_t *data);
+should_compile(const char *const source_path, const char *const object_path, const int comp_force);
+
+int
+exec_cc(char **argv);

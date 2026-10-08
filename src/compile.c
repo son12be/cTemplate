@@ -1,199 +1,19 @@
-/* TODO
- * Complete it?
- * Linker stuff
- * Sync and conter stuff - DONE
- * Replace vector with a VLA - DONE
- */
-
-
 #include <libgen.h>
 #include <glob.h>
 #include <limits.h>
+#include <stdio.h>
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <semaphore.h>
 #include <stdlib.h>
 
-#include "util.h"
-#include "misc.h"
 #include "err.h"
-
 #include "compile.h"
+#include "argv.h"
 
-#define ARGV_NULL_I argc - 1
-#define ARGV_OUTPATH_I argc - 2
-#define ARGV_OFLAG_I argc - 3
-#define ARGV_PATH_I argc - 4
-
-#define SLASH 1
-
-static sem_t sem;
-
-void
-sigchld_handler(int)
-{
-  sem_post(&sem);
-}
-
-inline static int
-lines(FILE *file)
-{
-  int lines = 0;
-  char buf[VALUE_SIZE];
-  while(fgets(buf, sizeof(buf), file))
-    lines++;
-
-  rewind(file);
-
-  return lines;
-}
-
-/*
- * first_opt should point one past '-c'.
- * From first_opt and on, theres malloc'd buffers.
- * Before first_opt, theres '-c' and then a strtok'd stack-allocated buffer
- */
-inline static int
-make_argv(char ***ret, const struct data_t *const data, int *const argc, int *const first_opt)
-{
-  *argc = 6; /* at least for cc, -c, filepath, -o; path, and NULL */
-
-  /* get argc */
-  for(char *s = data->cc; (s = strchr(s, ' ')) != NULL; s++, (*argc)++);
-  if(data->flagFile)
-  {
-    *argc += lines(data->flagFile);
-    if(*argc < 0)
-      ERR(-errno, "Failure counting flagfile lines");
-  }
-
-  /* allocate */
-  *ret = malloc(sizeof(char*) * *argc);
-  if(!*ret)
-    ERR(MALLOC, "Cant allocate argv");
-
-  /* get args from data->cc */
-  int i_arg = 0;
-  for(char *token = strtok(data->cc, " "); token; token = strtok(NULL, " "), ++i_arg)
-    (*ret)[i_arg] = token;
-
-  (*ret)[i_arg++] = "-c";
-
-  *first_opt = i_arg;
-
-  if(!data->flagFile)
-    goto end;
-
-  /* get args from flagFile */
-  char *line = malloc(VALUE_SIZE / 2);
-  if(!line)
-    ERR(MALLOC, "Cant allocate line buffer");
-  for(; (fgets(line, VALUE_SIZE / 2, data->flagFile)) != NULL; ++i_arg)
-  {
-    line[strcspn(line, "\n")] = '\0';
-    (*ret)[i_arg] = line;
-
-    line = malloc(VALUE_SIZE);
-    if(!line)
-    {
-      for(int j = 0; j < i_arg; ++j)
-        free((*ret)[j]);
-      free(*ret);
-      ERR(MALLOC, "Cant allocate line buffer");
-    }
-  }
-
-  free(line);
-
-
-end:
-  const int maxLenSz =
-    strlen(data->builddir) + SLASH +
-    strlen(data->label) + SLASH +
-    NAME_MAX +
-    1 /* NULL */;
-  (*ret)[*ARGV_OUTPATH_I] = malloc(maxLenSz);
-  if(!*ret)
-  {
-    for(int i = *first_opt; i < *ARGV_OFLAG_I; ++i)
-      free((*ret)[i]);
-    free(*ret);
-    ERR(MALLOC, "Cant allocate outpath");
-  }
-  snprintf((*ret)[*ARGV_OUTPATH_I], maxLenSz, "%s/%s/", data->builddir, data->label);
-  if(access((*ret)[*ARGV_OUTPATH_I], F_OK))
-    FAIL_CODE(mkdir((*ret)[*ARGV_OUTPATH_I], 0755), -errno, "Cant create directory \"%s\"", (*ret)[*ARGV_OUTPATH_I]);
-
-  (*ret)[*ARGV_OFLAG_I] = "-o";
-  (*ret)[*ARGV_PATH_I] = NULL;
-  (*ret)[*ARGV_NULL_I] = NULL;
-  return 0;
-}
-
-static void
-destroy_argv(char ***argv, int argc, int first_opt)
-{
-  for(; first_opt < ARGV_PATH_I; ++first_opt)
-    free((*argv)[first_opt]);
-  free((*argv)[ARGV_OUTPATH_I]);
-  *argv = NULL;
-}
-
-inline static int
-has_changed(const char *const source_path, const char *const object_path, const int comp_force)
-{
-  if(comp_force || access(object_path, F_OK) != 0)
-    return 1;
-
-  struct stat st;
-  time_t source_modtime;
-  time_t object_modtime;
-
-  FAIL_CODE(stat(source_path, &st) < 0, CANT_OPEN, "Cant open stat struct for path \"%s\"", source_path);
-  source_modtime = st.st_mtim.tv_sec;
-
-  FAIL_CODE(stat(object_path, &st) < 0, CANT_OPEN, "Cant open stat struct for path \"%s\"", object_path);
-  object_modtime = st.st_mtim.tv_sec;
-  
-  return source_modtime > object_modtime;
-}
-
-/*
- * Decrement sem and "fork and exec"
- * sigchld will handle incrementing sem
- */
-inline static int
-exec_cc(char **argv)
-{
-  /* No idea how to do this either */
-
-  sem_wait(&sem);
-  pid_t pid = fork();
-  if(pid < 0)
-  {
-    ERR(-errno, "Cant fork");
-  } else if(pid == 0) /* child */
-  {
-    /* TODO
-     * Move output to a logfile
-     */
-    for(int i = 0; argv[i] != NULL; ++i)
-      printf("%s ", argv[i]);
-    printf("\n");
-
-    execvp(argv[0], argv);
-
-    /* if exec returns, then it failed */
-    ERR_NR(-errno, "Cant execute \"%s\"", argv[0]);
-    exit(errno); /* Children shall never return */
-  } else /* parent */
-  {
-    return 0;
-  }
-}
+sem_t sem;
 
 static inline int
 compile_srcdir(const char *const srcdir, const struct data_t *data, char **argv, const int argc, int flags)
@@ -233,7 +53,7 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, char **argv,
 
     int changed;
     FAIL_GOTO(
-        (changed = has_changed(argv[ARGV_PATH_I], argv[ARGV_OUTPATH_I], flags & OPTCOMP_FORCE)) < 0,
+        (changed = should_compile(argv[ARGV_PATH_I], argv[ARGV_OUTPATH_I], flags & OPTCOMP_FORCE)) < 0,
         err);
     if(!changed)
       continue;
@@ -264,10 +84,7 @@ err:
 int
 compile(struct data_t *data, const int flags)
 {
-  if(sem_init(&sem, 0, data->threads) < 0)
-  {
-    ERR(CANT_OPEN, "Cant open semaphore");
-  }
+  FAIL_CODE(sem_init(&sem, 0, data->threads) < 0, CANT_OPEN, "Cant open semaphore");
 
   if(!data->label)
     data->label = "";
