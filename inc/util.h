@@ -7,8 +7,8 @@
 
 extern sem_t sem;
 
-#define OPTCOMP_FORCE  0b00000001
-#define OPTRUN         0b00000010
+#define OPTCOMP_FORCE  1u // ...01
+#define OPTRUN         2u // ...10
 
 #define streq(A, B) (strcmp(A, B) == 0)
 
