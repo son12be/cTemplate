@@ -96,6 +96,11 @@ compile(struct data_t *data, const int flags)
   const struct sigaction sig = { .sa_handler = sigchld_handler };
   sigaction(SIGCHLD, &sig, NULL);
 
+  printf("Compiler: %s\nCompiling with flags:", vec->data[0]);
+  for(int i = vec->first_opt; i < ARGV_PATH_I; ++i)
+    printf(" %s", vec->data[i]);
+  printf("\n");
+
   /* loop through specified srcdirs */
   for(char *srcdir = strtok(data->srcdirs, " "); srcdir; srcdir = strtok(NULL, " "))
   {
@@ -138,9 +143,13 @@ compile(struct data_t *data, const int flags)
   memcpy(argv_cc + ARGV_NULL_I, file_list.gl_pathv, sizeof(char*) * (file_list.gl_pathc + 1));
   vec->size += file_list.gl_pathc;
 
+#ifdef DEBUG
   for(int i = 0; i < ARGV_NULL_I; ++i)
     printf("%s ", argv_cc[i]);
   printf("\n");
+#else
+  printf("LD [%s]\n", vec->data[ARGV_OUTPATH_I - file_list.gl_pathc]);
+#endif
 
   const pid_t pid = fork();
   if(pid < 0)

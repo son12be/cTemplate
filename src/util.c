@@ -71,6 +71,14 @@ exec_cc(vector_t *vec)
 {
   /* No idea how to do this either */
 
+#ifdef DEBUG
+    for(int i = 0; i < ARGV_NULL_I; ++i)
+      printf("%s ", vec->data[i]);
+    printf("\n");
+#else
+    printf("CC [%s]\n", vec->data[ARGV_OUTPATH_I]);
+#endif
+
   sem_wait(&sem);
   pid_t pid = fork();
   if(pid < 0)
@@ -78,10 +86,6 @@ exec_cc(vector_t *vec)
     ERR(-errno, "Cant fork");
   } else if(pid == 0) /* child */
   {
-    for(int i = 0; i < ARGV_NULL_I; ++i)
-      printf("%s ", vec->data[i]);
-    printf("\n");
-
     execvp(vec->data[0], vec->data);
 
     /* if exec returns, then it failed */
