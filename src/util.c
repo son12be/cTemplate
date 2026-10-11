@@ -54,10 +54,10 @@ should_compile(const char *const source_path, const char *const object_path, con
   time_t object_modtime;
 
   FAIL_CODE(stat(source_path, &st) < 0, CANT_OPEN, "Cant open stat struct for path \"%s\"", source_path);
-  source_modtime = st.st_mtim.tv_sec;
+  source_modtime = st.st_mtime;
 
   FAIL_CODE(stat(object_path, &st) < 0, CANT_OPEN, "Cant open stat struct for path \"%s\"", object_path);
-  object_modtime = st.st_mtim.tv_sec;
+  object_modtime = st.st_mtime;
   
   return source_modtime > object_modtime;
 }

@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <libgen.h>
 #include <glob.h>
 #include <limits.h>
@@ -12,16 +14,13 @@
 #include "err.h"
 #include "compile.h"
 #include "argv.h"
+#include "util.h"
 
 sem_t sem;
 
 static inline int
 compile_srcdir(const char *const srcdir, const struct data_t *data, vector_t *vec, int flags)
 {
-  const DIR *dir = opendir(srcdir);
-  if(!dir)
-    ERR(CANT_OPEN, "Cant open srcdir \"%s\"", srcdir);
-
   glob_t file_list;
   char pattern[
     strlen(srcdir) + SLASH +
@@ -31,11 +30,8 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, vector_t *ve
   snprintf(pattern, sizeof(pattern), "%s/*.%s", srcdir, data->ext);
 
   /* TODO maybe store rc? */
-  if(glob(pattern, GLOB_NOSORT | GLOB_ERR, NULL, &file_list))
-  {
-    closedir(dir);
-    ERR(NOMATCH, "Pattern was \"%s\"", pattern);
-  }
+  FAIL_CODE(glob(pattern, GLOB_NOSORT | GLOB_ERR, NULL, &file_list) != 0,
+      NOMATCH, "Pattern was \"%s\"", pattern);
 
   /* loop through returned paths */
   const char *outpath_end = strrchr(vec->data[ARGV_OUTPATH_I], '/') + 1;
@@ -51,10 +47,12 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, vector_t *ve
     }
     snprintf(outpath_end, NAME_MAX, "%s.o", basename(vec->data[ARGV_PATH_I]));
 
-    int changed;
-    FAIL_GOTO(
-        (changed = should_compile(vec->data[ARGV_PATH_I], vec->data[ARGV_OUTPATH_I], flags & OPTCOMP_FORCE)) < 0,
-        err);
+    int changed = should_compile(
+                      vec->data[ARGV_PATH_I],
+                      vec->data[ARGV_OUTPATH_I],
+                      flags & OPTCOMP_FORCE);
+
+    FAIL_GOTO(changed < 0, err);
     if(!changed)
       continue;
 
@@ -67,16 +65,15 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, vector_t *ve
    * First run will fail, as not all .o files are spotted by glob(3p)
    * Second run will spot them and build properly
    */
-  const int dir_fd = dirfd(dir);
-  FAIL(fsync(dir_fd));
+  const int dir_fd = open(srcdir, 0);
+  FAIL_CODE(dir_fd < 0, -errno, "Cant open srcdir \"%s\"", srcdir);
+  FAIL_CODE(fdatasync(dir_fd) < 0, -errno, "Cant sync \"%s\"", srcdir); /* should we make it a warn? */
 
-  closedir(dir);
   globfree(&file_list);
 
   return 0;
 
 err:
-  closedir(dir);
   globfree(&file_list);
   return -1;
 }
@@ -133,7 +130,6 @@ compile(struct data_t *data, const int flags)
     ERR(NOMATCH, "Pattern was \"%s\"", pattern);
   }
 
-  // vec->data = realloc(vec->data, sizeof(char*) * (vec->size + file_list.gl_pathc + 1)); // vec->data[<vec->first_opt] not malloc'd
   int bytes = sizeof(char*) * (vec->size + file_list.gl_pathc + 1);
   char **argv_cc = malloc(bytes);
   memcpy(argv_cc, vec->data, sizeof(char*) * vec->size);
