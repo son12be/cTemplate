@@ -16,7 +16,7 @@
 sem_t sem;
 
 static inline int
-compile_srcdir(const char *const srcdir, const struct data_t *data, char **argv, const int argc, int flags)
+compile_srcdir(const char *const srcdir, const struct data_t *data, vector_t *vec, int flags)
 {
   const DIR *dir = opendir(srcdir);
   if(!dir)
@@ -38,27 +38,27 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, char **argv,
   }
 
   /* loop through returned paths */
-  const char *outpath_end = strrchr(argv[ARGV_OUTPATH_I], '/') + 1;
+  const char *outpath_end = strrchr(vec->data[ARGV_OUTPATH_I], '/') + 1;
   for(unsigned int i = 0; i < file_list.gl_pathc; ++i)
   {
-    argv[ARGV_PATH_I] = file_list.gl_pathv[i];
+    vec->data[ARGV_PATH_I] = file_list.gl_pathv[i];
 
     struct stat st;
-    if(stat(argv[ARGV_PATH_I], &st) < 0)
+    if(stat(vec->data[ARGV_PATH_I], &st) < 0)
     {
-      ERR_NR(CANT_OPEN, "Cant get stat struct for file \"%s\"", argv[ARGV_PATH_I]);
+      ERR_NR(CANT_OPEN, "Cant get stat struct for file \"%s\"", vec->data[ARGV_PATH_I]);
       goto err;
     }
-    snprintf(outpath_end, NAME_MAX, "%s.o", basename(argv[ARGV_PATH_I]));
+    snprintf(outpath_end, NAME_MAX, "%s.o", basename(vec->data[ARGV_PATH_I]));
 
     int changed;
     FAIL_GOTO(
-        (changed = should_compile(argv[ARGV_PATH_I], argv[ARGV_OUTPATH_I], flags & OPTCOMP_FORCE)) < 0,
+        (changed = should_compile(vec->data[ARGV_PATH_I], vec->data[ARGV_OUTPATH_I], flags & OPTCOMP_FORCE)) < 0,
         err);
     if(!changed)
       continue;
 
-    if(exec_cc(argv) < 0)
+    if(exec_cc(vec) < 0)
       goto err;
   }
 
@@ -89,10 +89,9 @@ compile(struct data_t *data, const int flags)
   if(!data->label)
     data->label = "";
 
-  int argc;
-  int first_opt;
-  char **argv;
-  FAIL(make_argv(&argv, data, &argc, &first_opt) < 0);
+  vector_t vector;
+  FAIL(make_argv(&vector, data) < 0);
+  vector_t *vec = &vector;
 
   const struct sigaction sig = { .sa_handler = sigchld_handler };
   sigaction(SIGCHLD, &sig, NULL);
@@ -100,20 +99,20 @@ compile(struct data_t *data, const int flags)
   /* loop through specified srcdirs */
   for(char *srcdir = strtok(data->srcdirs, " "); srcdir; srcdir = strtok(NULL, " "))
   {
-    if(compile_srcdir(srcdir, data, argv, argc, flags) < 0)
+    if(compile_srcdir(srcdir, data, vec, flags) < 0)
     {
-      destroy_argv(&argv, argc, first_opt);
+      destroy_argv(&vec);
       return -1;
     }
     waitpid(-1, NULL, 0);
   }
 
-  /* move eveything before first_opt by one to overwrite '-c' */
-  memmove(argv + 1, argv, sizeof(char*) * (first_opt - 1));
-  argv++; argc--; first_opt--;
+  /* move eveything before vec->first_opt by one to overwrite '-c' */
+  memmove(vec->data + 1, vec->data, sizeof(char*) * (vec->first_opt - 1));
+  vec->data++; vec->size--; vec->first_opt--;
 
   /* Fuck it, simplier than having to deal with what to do with PATH */
-  argv[ARGV_PATH_I] = "-Wl,--as-needed";
+  vec->data[ARGV_PATH_I] = "-Wl,--as-needed";
 
   glob_t file_list;
   char pattern[
@@ -124,20 +123,20 @@ compile(struct data_t *data, const int flags)
   snprintf(pattern, sizeof(pattern), "%s/%s/*.o", data->builddir, data->label);
   if(glob(pattern, GLOB_NOSORT | GLOB_ERR, NULL, &file_list) != 0)
   {
-    destroy_argv(&argv, argc, first_opt);
+    destroy_argv(&vec);
     globfree(&file_list);
     ERR(NOMATCH, "Pattern was \"%s\"", pattern);
   }
 
-  // argv = realloc(argv, sizeof(char*) * (argc + file_list.gl_pathc + 1)); // argv[<first_opt] not malloc'd
-  int bytes = sizeof(char*) * (argc + file_list.gl_pathc + 1);
+  // vec->data = realloc(vec->data, sizeof(char*) * (vec->size + file_list.gl_pathc + 1)); // vec->data[<vec->first_opt] not malloc'd
+  int bytes = sizeof(char*) * (vec->size + file_list.gl_pathc + 1);
   char **argv_cc = malloc(bytes);
-  memcpy(argv_cc, argv, sizeof(char*) * argc);
+  memcpy(argv_cc, vec->data, sizeof(char*) * vec->size);
 
   snprintf(strrchr(argv_cc[ARGV_OUTPATH_I], '/') + 1, NAME_MAX, "%s", data->name);
 
   memcpy(argv_cc + ARGV_NULL_I, file_list.gl_pathv, sizeof(char*) * (file_list.gl_pathc + 1));
-  argc += file_list.gl_pathc;
+  vec->size += file_list.gl_pathc;
 
   for(int i = 0; i < ARGV_NULL_I; ++i)
     printf("%s ", argv_cc[i]);
@@ -153,16 +152,16 @@ compile(struct data_t *data, const int flags)
 
     /* FIXME
      * 2 mem leaks here
-     * Gotta free argv
+     * Gotta free vec->data
      */
     ERR_NR(-errno, "Cant exec \"%s\"", argv_cc[0]);
-    argc -= file_list.gl_pathc;
-    destroy_argv(&argv_cc, argc, first_opt);
+    vec->size -= file_list.gl_pathc;
+    destroy_argv(&vec);
     globfree(&file_list);
   } else
   {
-    argc -= file_list.gl_pathc;
-    destroy_argv(&argv_cc, argc, first_opt);
+    vec->size -= file_list.gl_pathc;
+    destroy_argv(&vec);
     globfree(&file_list);
 
     waitpid(-1, NULL, WNOHANG);

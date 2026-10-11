@@ -5,6 +5,8 @@
 
 #include "misc.h"
 
+typedef struct vector_t vector_t;
+
 extern sem_t sem;
 
 #define OPTCOMP_FORCE  (1u << 0)
@@ -43,5 +45,6 @@ sigchld_handler(int);
 int
 should_compile(const char *const source_path, const char *const object_path, const int comp_force);
 
+/* move to compile.* or argv.* */
 int
-exec_cc(char **argv);
+exec_cc(vector_t *vec);

@@ -26,32 +26,32 @@ lines(FILE *file)
  * Before first_opt, theres '-c' and then a strtok'd stack-allocated buffer
  */
 int
-make_argv(char ***ret, const struct data_t *const data, int *const argc, int *const first_opt)
+make_argv(vector_t *vec, const struct data_t *const data)
 {
-  *argc = 6; /* at least for cc, -c, filepath, -o; path, and NULL */
+  vec->size = 6; /* at least for cc, -c, filepath, -o; path, and NULL */
 
   /* get argc */
-  for(char *s = data->cc; (s = strchr(s, ' ')) != NULL; s++, (*argc)++);
+  for(char *s = data->cc; (s = strchr(s, ' ')) != NULL; s++, vec->size++);
   if(data->flagFile)
   {
-    *argc += lines(data->flagFile);
-    if(*argc < 0)
+    vec->size += lines(data->flagFile);
+    if(vec->size < 0)
       ERR(-errno, "Failure counting flagfile lines");
   }
 
   /* allocate */
-  *ret = malloc(sizeof(char*) * *argc);
-  if(!*ret)
+  vec->data = malloc(sizeof(char*) * vec->size);
+  if(!vec->data)
     ERR(MALLOC, "Cant allocate argv");
 
   /* get args from data->cc */
   int i_arg = 0;
   for(char *token = strtok(data->cc, " "); token; token = strtok(NULL, " "), ++i_arg)
-    (*ret)[i_arg] = token;
+    vec->data[i_arg] = token;
 
-  (*ret)[i_arg++] = "-c";
+  vec->data[i_arg++] = "-c";
 
-  *first_opt = i_arg;
+  vec->first_opt = i_arg;
 
   if(!data->flagFile)
     goto end;
@@ -63,14 +63,14 @@ make_argv(char ***ret, const struct data_t *const data, int *const argc, int *co
   for(; (fgets(line, VALUE_SIZE / 2, data->flagFile)) != NULL; ++i_arg)
   {
     line[strcspn(line, "\n")] = '\0';
-    (*ret)[i_arg] = line;
+    vec->data[i_arg] = line;
 
     line = malloc(VALUE_SIZE);
     if(!line)
     {
       for(int j = 0; j < i_arg; ++j)
-        free((*ret)[j]);
-      free(*ret);
+        free(vec->data[j]);
+      free(vec->data);
       ERR(MALLOC, "Cant allocate line buffer");
     }
   }
@@ -84,30 +84,32 @@ end:
     strlen(data->label) + SLASH +
     NAME_MAX +
     1 /* NULL */;
-  (*ret)[*ARGV_OUTPATH_I] = malloc(maxLenSz);
-  if(!*ret)
+  vec->data[ARGV_OUTPATH_I] = malloc(maxLenSz);
+  if(!vec->data[ARGV_OUTPATH_I])
   {
-    for(int i = *first_opt; i < *ARGV_OFLAG_I; ++i)
-      free((*ret)[i]);
-    free(*ret);
+    for(int i = vec->first_opt; i < ARGV_OFLAG_I; ++i)
+      free(vec->data[i]);
+    free(vec->data);
     ERR(MALLOC, "Cant allocate outpath");
   }
-  snprintf((*ret)[*ARGV_OUTPATH_I], maxLenSz, "%s/%s/", data->builddir, data->label);
-  if(access((*ret)[*ARGV_OUTPATH_I], F_OK))
-    FAIL_CODE(mkdir((*ret)[*ARGV_OUTPATH_I], 0755), -errno, "Cant create directory \"%s\"", (*ret)[*ARGV_OUTPATH_I]);
+  snprintf(vec->data[ARGV_OUTPATH_I], maxLenSz, "%s/%s/", data->builddir, data->label);
+  if(access(vec->data[ARGV_OUTPATH_I], F_OK))
+    FAIL_CODE(mkdir(vec->data[ARGV_OUTPATH_I], 0755), -errno, "Cant create directory \"%s\"", vec->data[ARGV_OUTPATH_I]);
 
-  (*ret)[*ARGV_OFLAG_I] = "-o";
-  (*ret)[*ARGV_PATH_I] = NULL;
-  (*ret)[*ARGV_NULL_I] = NULL;
+  vec->data[ARGV_OFLAG_I] = "-o";
+  vec->data[ARGV_PATH_I] = NULL;
+  vec->data[ARGV_NULL_I] = NULL;
   return 0;
 }
 
 void
-destroy_argv(char ***argv, int argc, int first_opt)
+destroy_argv(vector_t **vector)
 {
-  for(; first_opt < ARGV_PATH_I; ++first_opt)
-    free((*argv)[first_opt]);
-  free((*argv)[ARGV_OUTPATH_I]);
-  *argv = NULL;
+  vector_t *vec = *vector;
+  for(; vec->first_opt < ARGV_PATH_I; ++vec->first_opt)
+    free(vec->data[vec->first_opt]);
+  free(vec->data[ARGV_OUTPATH_I]);
+
+  *vector = NULL;
 }
 

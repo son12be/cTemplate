@@ -1,3 +1,5 @@
+#include <libgen.h>
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -5,6 +7,7 @@
 #include <stdlib.h>
 
 #include "util.h"
+#include "argv.h"
 #include "err.h"
 
 int
@@ -64,7 +67,7 @@ should_compile(const char *const source_path, const char *const object_path, con
  * sigchld will handle incrementing sem
  */
 extern inline int
-exec_cc(char **argv)
+exec_cc(vector_t *vec)
 {
   /* No idea how to do this either */
 
@@ -75,17 +78,14 @@ exec_cc(char **argv)
     ERR(-errno, "Cant fork");
   } else if(pid == 0) /* child */
   {
-    /* TODO
-     * Move output to a logfile
-     */
-    for(int i = 0; argv[i] != NULL; ++i)
-      printf("%s ", argv[i]);
+    for(int i = 0; i < ARGV_NULL_I; ++i)
+      printf("%s ", vec->data[i]);
     printf("\n");
 
-    execvp(argv[0], argv);
+    execvp(vec->data[0], vec->data);
 
     /* if exec returns, then it failed */
-    ERR_NR(-errno, "Cant execute \"%s\"", argv[0]);
+    ERR_NR(-errno, "Cant execute \"%s\"", vec->data[0]);
     exit(errno); /* Children shall never return */
   } else /* parent */
   {
