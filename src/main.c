@@ -20,6 +20,7 @@ main(int argc, char **argv)
 		.builddir = { 0 },
 		.ext = { 0 },
 		.cc = { 0 },
+		.cc_args = { 0 },
 		.threads = 1,
 		.flagFile = NULL,
 	};

@@ -27,7 +27,11 @@ argv_get_argc(const struct data_t *const data, int *extra)
   int argc = 6; /* at least for cc, -c, filepath, -o; path, and NULL */
 
   /* get argc */
-  for(char *s = data->cc; (s = strchr(s, ' ')) != NULL; s++, argc++);
+  if(data->cc_args[0])
+  {
+    argc++;
+    for(char *s = data->cc_args; (s = strchr(s, ' ')) != NULL; s++, argc++);
+  }
   if(data->flagFile)
     argc += lines(data->flagFile);
 
@@ -70,9 +74,11 @@ make_argv(vector_t *vec, const struct data_t *const data)
   vec->data = malloc(sizeof(char*) * (vec->size + extra));
   FAIL_CODE(!vec->data, MALLOC, "Cant allocate argv");
 
-  /* get args from data->cc */
-  int i_arg = 0;
-  for(char *token = strtok(data->cc, " "); token; token = strtok(NULL, " "), ++i_arg)
+  /* get args */
+  vec->data[0] = data->cc;
+
+  int i_arg = 1;
+  for(char *token = strtok(data->cc_args, " "); token; token = strtok(NULL, " "), ++i_arg)
     vec->data[i_arg] = token;
 
   vec->data[i_arg++] = "-c";

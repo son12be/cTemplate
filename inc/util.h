@@ -24,7 +24,8 @@ enum logLevel_e
 
 struct data_t
 {
-	char cc[VALUE_SIZE];
+	char cc[SMALL_VALUE_SIZE / 4];
+	char cc_args[VALUE_SIZE];
 	char srcdirs[VALUE_SIZE];
 	char builddir[SMALL_VALUE_SIZE];
 	char name[SMALL_VALUE_SIZE];

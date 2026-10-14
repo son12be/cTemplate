@@ -4,9 +4,10 @@ global:
   BUILDDIR build
   FLAGFILE compile_flags.txt
   EXT c
+  CC clang
 
 debug:
-  CC clang -O0 -ggdb3 -fsanitize=address -DDEBUG
+  ARGS -O0 -ggdb3 -fsanitize=address -DDEBUG
 
 release:
-  CC clang -O3 -flto=thin
+  ARGS -O3 -flto=thin

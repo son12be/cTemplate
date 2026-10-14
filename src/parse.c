@@ -10,6 +10,7 @@ struct tuple_t
 	const char *key;
 	void *value;
 	uint16_t maxSz;
+  uint8_t required;
 };
 
 static inline int
@@ -42,8 +43,7 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line, stru
 
 		/* find the whitespace between key and value */
 		char *value = strchr(line_cc, ' ');
-		if(!value || *(++value) == '\0')
-			ERR(BAD_FORMAT, "At line %i. Key lshould have a value", cur_line);
+		FAIL_CODE(!value || *(++value) == '\0', BAD_FORMAT, "At line %i. Key should have a value", cur_line);
 
 		*(value - 1) = '\0';
 
@@ -51,8 +51,7 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line, stru
 		if(streq(line_cc, "FLAGFILE"))
 		{
 			data->flagFile = fopen(value, "r");
-			if(!data->flagFile)
-				ERR(CANT_OPEN,  "At line %i. Cant open flagfile \"%s\"", cur_line, value);
+			FAIL_CODE(!data->flagFile, CANT_OPEN,  "At line %i. Cant open flagfile \"%s\"", cur_line, value);
 			continue;
 		}
 
@@ -67,8 +66,7 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line, stru
 			snprintf(confTuples[i].value, confTuples[i].maxSz, "%s", value);
 		}
 	}
-	if(errno)
-		ERR(-errno, "Failed while parsing template");
+	FAIL_CODE(errno, -errno, "Failed while parsing template");
 	return 0;
 }
 
@@ -117,11 +115,12 @@ parse_template(struct data_t *data)
 
 	struct tuple_t confTuples[] =
 	{
-		{ "SRCDIRS", data->srcdirs, sizeof(data->srcdirs) },
-		{ "BUILDDIR", data->builddir, sizeof(data->builddir) },
-		{ "EXT", data->ext, sizeof(data->ext) },
-		{ "CC", data->cc, sizeof(data->cc) },
-		{ "NAME", data->name, sizeof(data->cc) },
+		{ "SRCDIRS", data->srcdirs, sizeof(data->srcdirs), 1 },
+		{ "BUILDDIR", data->builddir, sizeof(data->builddir), 1 },
+		{ "EXT", data->ext, sizeof(data->ext), 1 },
+		{ "CC", data->cc, sizeof(data->cc), 1 },
+		{ "ARGS", data->cc_args, sizeof(data->cc_args), 0 },
+		{ "NAME", data->name, sizeof(data->cc), 1 },
 	};
 
 	int cur_line = 0;
@@ -144,7 +143,7 @@ parse_template(struct data_t *data)
 
 	for(unsigned int i = 0; i < sizeof(confTuples) / sizeof(struct tuple_t); ++i)
 	{
-		if(!((char*)confTuples[i].value)[0])
+		if(confTuples[i].required && !((char*)confTuples[i].value)[0])
 			ERR(BAD_FORMAT, "A value for key \"%s\" is required", confTuples[i].key);
 	}
 
