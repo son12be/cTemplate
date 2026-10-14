@@ -130,18 +130,14 @@ compile(struct data_t *data, const int flags)
     ERR(NOMATCH, "Pattern was \"%s\"", pattern);
   }
 
-  int bytes = sizeof(char*) * (vec->size + file_list.gl_pathc + 1);
-  char **argv_cc = malloc(bytes);
-  memcpy(argv_cc, vec->data, sizeof(char*) * vec->size);
+  snprintf(strrchr(vec->data[ARGV_OUTPATH_I], '/') + 1, NAME_MAX, "%s", data->name);
 
-  snprintf(strrchr(argv_cc[ARGV_OUTPATH_I], '/') + 1, NAME_MAX, "%s", data->name);
-
-  memcpy(argv_cc + ARGV_NULL_I, file_list.gl_pathv, sizeof(char*) * (file_list.gl_pathc + 1));
+  memcpy(vec->data + ARGV_NULL_I, file_list.gl_pathv, sizeof(char*) * (file_list.gl_pathc + 1));
   vec->size += file_list.gl_pathc;
 
 #ifdef DEBUG
   for(int i = 0; i < ARGV_NULL_I; ++i)
-    printf("%s ", argv_cc[i]);
+    printf("%s ", vec->data[i]);
   printf("\n");
 #else
   printf("LD [%s]\n", vec->data[ARGV_OUTPATH_I - file_list.gl_pathc]);
@@ -150,30 +146,24 @@ compile(struct data_t *data, const int flags)
   const pid_t pid = fork();
   if(pid < 0)
   {
-    ERR(-errno, "fork() failed");
+    ERR_NR(-errno, "fork() failed");
   } else if(pid == 0)
   {
-    execvp(argv_cc[0], argv_cc);
+    execvp(vec->data[0], vec->data);
 
-    /* FIXME
-     * 2 mem leaks here
-     * Gotta free vec->data
-     */
-    ERR_NR(-errno, "Cant exec \"%s\"", argv_cc[0]);
-    vec->size -= file_list.gl_pathc;
-    destroy_argv(&vec);
-    globfree(&file_list);
+    ERR_NR(-errno, "Cant exec \"%s\"", vec->data[0]);
   } else
   {
-    vec->size -= file_list.gl_pathc;
-    destroy_argv(&vec);
-    globfree(&file_list);
-
     waitpid(-1, NULL, WNOHANG);
-
-    return 0;
   }
 
+  /*
+   * A mem leak here
+   * vec->data is not freed (the contents are)
+   */
+  vec->size -= file_list.gl_pathc;
+  destroy_argv(&vec);
+  globfree(&file_list);
 
-  return -1;
+  return get_err();
 }

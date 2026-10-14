@@ -1,3 +1,4 @@
+#include <glob.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -20,6 +21,40 @@ lines(FILE *file)
   return lines;
 }
 
+static inline int
+argv_get_argc(const struct data_t *const data, int *extra)
+{
+  int argc = 6; /* at least for cc, -c, filepath, -o; path, and NULL */
+
+  /* get argc */
+  for(char *s = data->cc; (s = strchr(s, ' ')) != NULL; s++, argc++);
+  if(data->flagFile)
+    argc += lines(data->flagFile);
+
+  /* to preallocate resulting .o files */
+  glob_t file_list;
+  file_list.gl_offs = 0;
+  for(char *srcdir = strtok(data->srcdirs, " "); srcdir; srcdir = strtok(NULL, " "))
+  {
+    char pattern[
+      strlen(srcdir) + SLASH +
+      sizeof("*.") + strlen(data->ext)
+    ];
+  
+    snprintf(pattern, sizeof(pattern), "%s/*.%s", srcdir, data->ext);
+
+    if(glob(pattern, GLOB_NOSORT | GLOB_ERR | GLOB_DOOFFS, NULL, &file_list) != 0)
+    {
+      globfree(&file_list);
+      ERR(NOMATCH, "Pattern was \"%s\"", pattern);
+    }
+    *extra += file_list.gl_pathc;
+  }
+  globfree(&file_list);
+
+  return argc;
+}
+
 /*
  * first_opt should point one past '-c'.
  * From first_opt and on, theres malloc'd buffers.
@@ -28,21 +63,12 @@ lines(FILE *file)
 int
 make_argv(vector_t *vec, const struct data_t *const data)
 {
-  vec->size = 6; /* at least for cc, -c, filepath, -o; path, and NULL */
-
-  /* get argc */
-  for(char *s = data->cc; (s = strchr(s, ' ')) != NULL; s++, vec->size++);
-  if(data->flagFile)
-  {
-    vec->size += lines(data->flagFile);
-    if(vec->size < 0)
-      ERR(-errno, "Failure counting flagfile lines");
-  }
+  int extra = 0;
+  vec->size = argv_get_argc(data, &extra);
 
   /* allocate */
-  vec->data = malloc(sizeof(char*) * vec->size);
-  if(!vec->data)
-    ERR(MALLOC, "Cant allocate argv");
+  vec->data = malloc(sizeof(char*) * (vec->size + extra));
+  FAIL_CODE(!vec->data, MALLOC, "Cant allocate argv");
 
   /* get args from data->cc */
   int i_arg = 0;
@@ -58,8 +84,7 @@ make_argv(vector_t *vec, const struct data_t *const data)
 
   /* get args from flagFile */
   char *line = malloc(VALUE_SIZE / 2);
-  if(!line)
-    ERR(MALLOC, "Cant allocate line buffer");
+  FAIL_CODE(!line, MALLOC, "Cant allocate line buffer");
   for(; (fgets(line, VALUE_SIZE / 2, data->flagFile)) != NULL; ++i_arg)
   {
     line[strcspn(line, "\n")] = '\0';
@@ -110,6 +135,8 @@ destroy_argv(vector_t **vector)
     free(vec->data[vec->first_opt]);
   free(vec->data[ARGV_OUTPATH_I]);
 
+#ifndef DEBUG
   *vector = NULL;
+#endif
 }
 
