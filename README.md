@@ -8,10 +8,11 @@ The template shall have:\
 &nbsp; **NAME**: The name of your final binary. Placed inside _BUILDDIR_.\
 &nbsp; **SRCDIRS**: Space-separated list of the directories where your source files are.\
 &nbsp; **BUILDDIR**: The directory to place the binary of your project. In a _BUILDDIR_/*cur_label*/ format.\
-&nbsp; **CC**: The name of the compiler. You may provide additional arguments here.\
+&nbsp; **CC**: The name of the compiler.\
 &nbsp; **EXT**: The extension of your source files.
 
 Aditionally, the template may contain:\
+&nbsp; **ARGS**: Optional arguments passed to *CC*.\
 &nbsp; **FLAGFILE**: A file contaning arguments provided to _CC_. One argument per line.
 
 All paths are relative to the template.
