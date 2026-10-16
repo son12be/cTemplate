@@ -155,10 +155,9 @@ compile(struct data_t *data, const int flags)
     execvp(vec->data[0], vec->data);
 
     ERR_NR(-errno, "Cant exec \"%s\"", vec->data[0]);
-  } else
-  {
-    waitpid(-1, NULL, WNOHANG);
   }
+
+  waitpid(pid, NULL, 0);
 
   /*
    * A mem leak here
