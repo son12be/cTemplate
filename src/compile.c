@@ -93,10 +93,13 @@ compile(struct data_t *data, const int flags)
   const struct sigaction sig = { .sa_handler = sigchld_handler };
   sigaction(SIGCHLD, &sig, NULL);
 
-  printf("Compiler: %s\nCompiling with flags:", vec->data[0]);
-  for(int i = vec->first_opt; i < ARGV_PATH_I; ++i)
-    printf(" %s", vec->data[i]);
-  printf("\n");
+  if(!(flags & OPTQUIET))
+  {
+    printf("Compiler: %s\nCompiling with flags:", vec->data[0]);
+    for(int i = vec->first_opt; i < ARGV_PATH_I; ++i)
+      printf(" %s", vec->data[i]);
+    printf("\n");
+  }
 
   /* loop through specified srcdirs */
   for(char *srcdir = strtok(data->srcdirs, " "); srcdir; srcdir = strtok(NULL, " "))

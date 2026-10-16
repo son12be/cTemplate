@@ -33,6 +33,7 @@ _cTemple_ accepts only 3 options:\
 &nbsp; **-jN**: Number of max parallel jobs to use, where `N` is the number.\
 &nbsp; **-f**: Dont check if file changed. Compile everything.\
 &nbsp; **-r**: Run the resulting binary after build process.\
+&nbsp; **-q**: Dont echo the compiler nor flags used.\
 &nbsp; **-l** ***label***: Specify the *cur_label*.
 
 # TODO
