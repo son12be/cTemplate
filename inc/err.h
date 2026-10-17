@@ -19,26 +19,27 @@
 #define ERR(ECODE, ...) return ERR_NR(ECODE, __VA_ARGS__)
 
 #define FAIL(EXPR)\
-	if(EXPR)\
-		return -1;
+  if(EXPR)\
+    return -1;
 // #define FAIL_NULL(EXPR)\
-// 	if(!(EXPR))\
-// 		return -1;
+//  if(!(EXPR))\
+//    return -1;
 #define FAIL_GOTO(EXPR, GOTO)\
-	if(EXPR)\
-		goto GOTO;
+  if(EXPR)\
+    goto GOTO;
 #define FAIL_CODE(EXPR, ECODE, ...)\
-	if(EXPR)\
-		ERR(ECODE, __VA_ARGS__)
+  if(EXPR)\
+    ERR(ECODE, __VA_ARGS__)
 
 typedef enum
 {
-	OK = 0,
-	BAD_FORMAT,
-	NULL_POINTER,
-	CANT_OPEN,
-	MALLOC,
-	NOMATCH,
+  OK = 0,
+  BAD_FORMAT,
+  NULL_POINTER,
+  CANT_OPEN,
+  MALLOC,
+  NOMATCH,
+  CHLD_ERR,
 } error_e;
 
 int

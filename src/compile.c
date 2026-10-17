@@ -109,7 +109,14 @@ compile(struct data_t *data, const int flags)
       destroy_argv(&vec);
       return -1;
     }
-    waitpid(-1, NULL, 0);
+  }
+  for(int chld_pid, chld_rc; (chld_pid = waitpid(-1, &chld_rc, WNOHANG)) > -1;)
+  {
+    if(WIFEXITED(chld_rc) && WEXITSTATUS(chld_rc) != 0)
+    {
+      destroy_argv(&vec);
+      ERR(CHLD_ERR, "A child returned %i", WEXITSTATUS(chld_rc));
+    }
   }
 
   /* move eveything before vec->first_opt by one to overwrite '-c' */
@@ -156,8 +163,6 @@ compile(struct data_t *data, const int flags)
 
     ERR_NR(-errno, "Cant exec \"%s\"", vec->data[0]);
   }
-
-  waitpid(pid, NULL, 0);
 
   /*
    * A mem leak here
