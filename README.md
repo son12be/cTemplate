@@ -41,6 +41,4 @@ Most likely almost everything. Not even sure if multiple srcdirs work.
 
 ## BUGS
 Lots of them.\
-For the final link, some `.o` files may not be seen (even though they were successfully
-compiled), resulting in a link time error. Just run it again if that happens.\
 SEGV.
