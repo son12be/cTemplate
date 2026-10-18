@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -10,9 +11,32 @@ struct tuple_t
 {
 	const char *key;
 	void *value;
-	uint16_t maxSz;
   uint8_t required;
 };
+
+#define GET_CONF_TABLE \
+	struct tuple_t confTuples[] = \
+	{ \
+		{ "SRCDIRS", &data->srcdirs, 1 }, \
+		{ "BUILDDIR", &data->builddir, 1 }, \
+		{ "EXT", &data->ext, 1 }, \
+		{ "CC", &data->cc, 1 }, \
+		{ "ARGS", &data->cc_args, 0 }, \
+		{ "NAME", &data->name, 1 }, \
+		{ "PRE_CC", &data->pre_cc, 0 }, \
+	};
+
+
+void
+destroy_data(struct data_t *data)
+{
+  GET_CONF_TABLE;
+  for(size_t i = 0; i < sizeof(confTuples) / sizeof(confTuples[0]); ++i)
+  {
+    if(*((char**)confTuples[i].value))
+      free(*((char**)confTuples[i].value));
+  }
+}
 
 static inline int
 actual_parse(struct data_t *const data, const FILE *template, int cur_line, struct tuple_t *const confTuples, const unsigned int n)
@@ -47,6 +71,7 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line, stru
 		FAIL_CODE(!value || *(++value) == '\0', BAD_FORMAT, "At line %i. Key should have a value", cur_line);
 
 		*(value - 1) = '\0';
+		trim_ws(&value);
 
 		/* handle special cases */
 		if(streq(line_cc, "FLAGFILE"))
@@ -59,12 +84,12 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line, stru
 		for(unsigned int i = 0; i < n; ++i)
 		{
 			if(!streq(line_cc, confTuples[i].key))
-				continue;
+				continue; 
 
-			trim_ws(&value);
+      const size_t len = strlen(value) + 1;
+      *((char**)confTuples[i].value) = malloc(len);
 
-			/* This line makes me want to use C++ */
-			snprintf(confTuples[i].value, confTuples[i].maxSz, "%s", value);
+			snprintf(*((char**)confTuples[i].value), len, "%s", value);
 		}
 	}
 	FAIL_CODE(errno, -errno, "Failed while parsing template");
@@ -114,16 +139,7 @@ parse_template(struct data_t *data)
 	if(!template)
 		ERR(CANT_OPEN, "Template file (%s)", TEMPLATE_FILENAME);
 
-	struct tuple_t confTuples[] =
-	{
-		{ "SRCDIRS", data->srcdirs, sizeof(data->srcdirs), 1 },
-		{ "BUILDDIR", data->builddir, sizeof(data->builddir), 1 },
-		{ "EXT", data->ext, sizeof(data->ext), 1 },
-		{ "CC", data->cc, sizeof(data->cc), 1 },
-		{ "ARGS", data->cc_args, sizeof(data->cc_args), 0 },
-		{ "NAME", data->name, sizeof(data->cc), 1 },
-		{ "PRE_CC", data->pre_cc, sizeof(data->pre_cc), 0 },
-	};
+  GET_CONF_TABLE;
 
 	int cur_line = 0;
 	if((cur_line = find_label(template, "global")) >= 0)
@@ -145,7 +161,7 @@ parse_template(struct data_t *data)
 
 	for(unsigned int i = 0; i < sizeof(confTuples) / sizeof(struct tuple_t); ++i)
 	{
-		if(confTuples[i].required && !((char*)confTuples[i].value)[0])
+		if(confTuples[i].required && !*((char**)confTuples[i].value))
 			ERR(BAD_FORMAT, "A value for key \"%s\" is required", confTuples[i].key);
 	}
 

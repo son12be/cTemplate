@@ -8,6 +8,7 @@
 #include "parse.h"
 #include "argv.h"
 #include "err.h"
+#include "misc.h"
 
 inline static int
 lines(FILE *file)
@@ -28,7 +29,7 @@ argv_get_argc(const struct data_t *const data, int *extra)
   int argc = 6; /* at least for cc, -c, filepath, -o; path, and NULL */
 
   /* get argc */
-  if(data->cc_args[0])
+  if(data->cc_args)
   {
     argc++;
     for(char *s = data->cc_args; (s = strchr(s, ' ')) != NULL; s++, argc++);
@@ -141,6 +142,7 @@ destroy_argv(vector_t **vector)
   for(; vec->first_opt < ARGV_PATH_I; ++vec->first_opt)
     free(vec->data[vec->first_opt]);
   free(vec->data[ARGV_OUTPATH_I]);
+  free(vec->data);
 
 #ifndef DEBUG
   *vector = NULL;

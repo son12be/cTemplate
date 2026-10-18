@@ -17,11 +17,12 @@ main(int argc, char **argv)
 {
 	struct data_t data = 
 	{
-		.srcdirs = { 0 },
-		.builddir = { 0 },
-		.ext = { 0 },
-		.cc = { 0 },
-		.cc_args = { 0 },
+		.srcdirs = 0,
+		.builddir = 0,
+		.ext = 0,
+		.cc = 0,
+		.cc_args = 0,
+    .pre_cc = 0,
 		.threads = 1,
 		.flagFile = NULL,
 	};
@@ -61,7 +62,7 @@ main(int argc, char **argv)
 	if(parse_template(&data) < 0)
     goto err;
 
-  if(data.pre_cc[0])
+  if(data.pre_cc)
   {
     pid_t pid = fork();
     if(pid < 0)
@@ -101,8 +102,10 @@ main(int argc, char **argv)
     goto err;
   }
 
+  destroy_data(&data);
   return 0;
 
 err:
+  destroy_data(&data);
   return report_err();
 }

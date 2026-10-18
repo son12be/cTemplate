@@ -121,9 +121,11 @@ compile(struct data_t *data, const int flags)
     }
   }
 
-  /* move eveything before vec->first_opt by one to overwrite '-c' */
-  memmove(vec->data + 1, vec->data, sizeof(char*) * (vec->first_opt - 1));
-  vec->data++; vec->size--; vec->first_opt--;
+  /* move eveything by one to overwrite '-c' */
+  /* dont modify vec->data, as that would have to adjust */
+  /* for that when freeing it */
+  memmove(vec->data + vec->first_opt - 1, vec->data + vec->first_opt, sizeof(char*) * (vec->size - vec->first_opt));
+  vec->size--; vec->first_opt--;
 
   /* Fuck it, simplier than having to deal with what to do with PATH */
   vec->data[ARGV_PATH_I] = "-Wl,--as-needed";
@@ -166,10 +168,6 @@ compile(struct data_t *data, const int flags)
     ERR_NR(-errno, "Cant exec \"%s\"", vec->data[0]);
   }
 
-  /*
-   * A mem leak here
-   * vec->data is not freed (the contents are)
-   */
   vec->size -= file_list.gl_pathc;
   destroy_argv(&vec);
   globfree(&file_list);
