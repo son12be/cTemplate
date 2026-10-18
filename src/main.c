@@ -1,4 +1,5 @@
 #include <linux/limits.h>
+#include <sys/wait.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -58,27 +59,50 @@ main(int argc, char **argv)
 	}
 
 	if(parse_template(&data) < 0)
-		return report_err();
+    goto err;
+
+  if(data.pre_cc[0])
+  {
+    pid_t pid = fork();
+    if(pid < 0)
+    {
+      ERR_NR(-errno, "Cant fork to execute \"%s\"", data.pre_cc);
+      goto err;
+    } else if(pid == 0)
+    {
+      execlp("/bin/sh", "/bin/sh", "-c", data.pre_cc, NULL);
+
+      ERR_NR(-errno, "Cant exec \"%s\"", data.pre_cc);
+      goto err;
+    } else 
+    {
+      int chld_rc;
+      waitpid(pid, &chld_rc, 0);
+      if(WIFEXITED(chld_rc) && WEXITSTATUS(chld_rc) != 0)
+      {
+        ERR_NR(CHLD_ERR, "\"%s\" exited with code %i", data.pre_cc, WEXITSTATUS(chld_rc));
+        goto err;
+      }
+    }
+  }
 
 	// printf("%s %s %s %s %s %i\n", data.srcdirs, data.incdirs, data.builddir, data.ext, data.cc, data.threads);
 	if(compile(&data, flags) < 0)
-		return report_err();
-
-	/* We gotta do something about this
-	 * Maybe an fatal flag?
-	 */
-	if(get_err())
-  {
-		report_err();
-  }
+    goto err;
 
   if(flags & OPTRUN)
   {
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "./%s/%s/%s", data.builddir, data.label, data.name);
     printf("Executing \"%s\"...\n", path);
-    return execlp(path, path);
+    execlp(path, path);
+
+    ERR_NR(-errno, "Cant exec \"%s\"", data.pre_cc);
+    goto err;
   }
 
-	return 0;
+  return 0;
+
+err:
+  return report_err();
 }

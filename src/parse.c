@@ -4,6 +4,7 @@
 #include "misc.h"
 #include "err.h"
 #include "parse.h"
+#include "util.h"
 
 struct tuple_t
 {
@@ -121,6 +122,7 @@ parse_template(struct data_t *data)
 		{ "CC", data->cc, sizeof(data->cc), 1 },
 		{ "ARGS", data->cc_args, sizeof(data->cc_args), 0 },
 		{ "NAME", data->name, sizeof(data->cc), 1 },
+		{ "PRE_CC", data->pre_cc, sizeof(data->pre_cc), 0 },
 	};
 
 	int cur_line = 0;

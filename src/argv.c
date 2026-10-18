@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#include "parse.h"
 #include "argv.h"
 #include "err.h"
 

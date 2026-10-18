@@ -13,7 +13,8 @@ The template shall have:\
 
 Aditionally, the template may contain:\
 &nbsp; **ARGS**: Optional arguments passed to *CC*.\
-&nbsp; **FLAGFILE**: A file contaning arguments provided to _CC_. One argument per line.
+&nbsp; **FLAGFILE**: A file contaning arguments provided to _CC_. One argument per line.\
+&nbsp; **PRE_CC**: Passed to _/bin/sh_ and executed before any compilation is done.
 
 All paths are relative to the template.
 

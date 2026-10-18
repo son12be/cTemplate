@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "err.h"
+#include "parse.h"
 #include "compile.h"
 #include "argv.h"
 #include "util.h"
@@ -64,6 +65,7 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, vector_t *ve
    * Remove all files of a label, then build with that label
    * First run will fail, as not all .o files are spotted by glob(3p)
    * Second run will spot them and build properly
+   * Should be fixed by 4d64a20; not sure tho
    */
   const int dir_fd = open(srcdir, 0);
   FAIL_CODE(dir_fd < 0, -errno, "Cant open srcdir \"%s\"", srcdir);
