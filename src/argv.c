@@ -16,7 +16,10 @@ lines(FILE *file)
   int lines = 0;
   char buf[VALUE_SIZE];
   while(fgets(buf, sizeof(buf), file))
-    lines++;
+  {
+    if(buf[strlen(buf) - 1] == '\n')
+      lines++;
+  }
 
   rewind(file);
 
@@ -91,14 +94,14 @@ make_argv(vector_t *vec, const struct data_t *const data)
     goto end;
 
   /* get args from flagFile */
-  char *line = malloc(VALUE_SIZE / 2);
+  char *line = malloc(LARGE_ENOUGH_LINE);
   FAIL_CODE(!line, MALLOC, "Cant allocate line buffer");
-  for(; (fgets(line, VALUE_SIZE / 2, data->flagFile)) != NULL; ++i_arg)
+  for(; (fgets(line, LARGE_ENOUGH_LINE, data->flagFile)) != NULL; ++i_arg)
   {
     line[strcspn(line, "\n")] = '\0';
     vec->data[i_arg] = line;
 
-    line = malloc(VALUE_SIZE);
+    line = malloc(LARGE_ENOUGH_LINE);
     if(!line)
     {
       for(int j = 0; j < i_arg; ++j)

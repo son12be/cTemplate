@@ -42,7 +42,7 @@ static inline int
 actual_parse(struct data_t *const data, const FILE *template, int cur_line, struct tuple_t *const confTuples, const unsigned int n)
 {
 	int label_hit = data->label ? 1 : 0;
-	char line[VALUE_SIZE];
+	char line[LARGE_ENOUGH_LINE];
 	while((fgets(line, sizeof(line), template)) != NULL)
 	{
 		cur_line++;
@@ -105,7 +105,7 @@ find_label(const FILE *template, const char *const label)
 		goto first_label;
 
 	const int label_len = strlen(label);
-	for(char line[VALUE_SIZE]; fgets(line, sizeof(line), template) != NULL; )
+	for(char line[LARGE_ENOUGH_LINE]; fgets(line, sizeof(line), template) != NULL; )
 	{
 		cur_line++;
 		if(strncmp(line, label, label_len) == 0)
@@ -116,7 +116,7 @@ find_label(const FILE *template, const char *const label)
 	return -1;
 
 first_label:
-	for(char line[VALUE_SIZE]; fgets(line, sizeof(line), template) != NULL; )
+	for(char line[LARGE_ENOUGH_LINE]; fgets(line, sizeof(line), template) != NULL; )
 	{
 		cur_line++;
 		char *colon = strrchr(line, ':');
@@ -129,9 +129,6 @@ first_label:
 	return 0;
 }
 
-/* NOTE
- * Line count breaks if the line is larger than VALUE_SIZE - 1
- */
 int
 parse_template(struct data_t *data)
 {
