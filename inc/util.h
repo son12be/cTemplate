@@ -13,13 +13,6 @@ extern sem_t sem;
 
 #define streq(A, B) (strcmp(A, B) == 0)
 
-enum logLevel_e
-{
-	LOG_ERR = 0,
-	LOG_WARN = 1,
-	LOG_DEBUG = 2,
-};
-
 int
 strends(const char *A, const char *B);
 
