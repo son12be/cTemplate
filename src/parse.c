@@ -1,11 +1,15 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-#include "misc.h"
 #include "err.h"
 #include "parse.h"
 #include "util.h"
+#include "main_info.h"
 
 struct tuple_t
 {
@@ -78,6 +82,50 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line, stru
     {
       data->flagFile = fopen(value, "r");
       FAIL_CODE(!data->flagFile, CANT_OPEN,  "At line %i. Cant open flagfile \"%s\"", cur_line, value);
+      continue;
+    } else if (streq(line_cc, "SUBDIR"))
+    {
+      const pid_t pid = fork();
+      FAIL_CODE(pid < 0, -errno, "Cant fork()");
+      if(pid == 0)
+      {
+        const char *const dir = value;
+        const size_t dir_len = strlen(dir);
+        char *const arg = value + dir_len + 2;
+
+        char cmd[sizeof(line) - dir_len];
+        snprintf(cmd, sizeof(cmd), "%s", get_argv()[0]);
+
+        if(*arg && isspace((unsigned char)*(arg - 1)))
+        {
+          *(arg - 1) = '\0';
+          snprintf(cmd, sizeof(cmd), " %s", arg);
+        }
+
+        trim_ws(&dir);
+        if(chdir(dir) < 0)
+        {
+          ERR_NR(-errno, "In SUBDIR: Cant cd into \"%s\". At line %i", dir, cur_line);
+          goto err;
+        }
+
+        printf("Entering subdir \"%s\"...\n", dir);
+        shell_exec(cmd);
+
+        ERR_NR(-errno, "In SUBDIR: Cant execute \"%s\". At line %i", cmd, cur_line);
+
+err:
+        report_err();
+        exit(-1);
+      }
+
+      int chld_rc;
+      waitpid(pid, &chld_rc, 0);
+      if(WIFEXITED(chld_rc) && WEXITSTATUS(chld_rc) != 0)
+      {
+        ERR(CHLD_ERR, "Failed to enter subdir at line %i", cur_line);
+      }
+
       continue;
     }
 

@@ -2,6 +2,10 @@
 
 #include <stdio.h>
 
+#define TEMPLATE_FILENAME "TEMPLATE"
+#define LARGE_ENOUGH_LINE 1024
+#define VALUE_SIZE 256
+
 struct data_t
 {
   char *cc;

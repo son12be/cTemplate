@@ -1,8 +1,16 @@
 #pragma once
 
-#define TEMPLATE_FILENAME "TEMPLATE"
-#define CHANGEFILE_FILENAME "timestamps"
+#include "parse.h"
+#include "argv.h"
 
-#define LARGE_ENOUGH_LINE 1024
+int
+pre_cc(struct data_t *data);
 
-#define VALUE_SIZE 256
+void
+sigchld_handler(int);
+
+int
+should_compile(const char *const source_path, const char *const object_path, const int comp_force);
+
+int
+exec_cc(vector_t *vec);

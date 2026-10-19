@@ -14,6 +14,7 @@ The template shall have:\
 Aditionally, the template may contain:\
 &nbsp; **ARGS**: Optional arguments passed to *CC*.\
 &nbsp; **FLAGFILE**: A file contaning arguments provided to _CC_. One argument per line.\
+&nbsp; **SUBDIR**: A directory that _cTemple_ will chdir into and execute itself. May provide arguments passed to _cTemple_ after the dir.\
 &nbsp; **PRE_CC**: Passed to _/bin/sh_ and executed before any compilation is done.
 
 All paths are relative to the template.

@@ -1,6 +1,4 @@
 #include <linux/limits.h>
-#include <sys/wait.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -9,12 +7,16 @@
 #include "err.h"
 #include "util.h"
 #include "parse.h"
+#include "misc.h"
+#include "main_info.h"
 
 /* bro meson is so much better wtf */
 
 int
 main(int argc, char **argv)
 {
+  arg_init(argc, argv);
+
   struct data_t data = 
   {
     .srcdirs = 0,
@@ -35,7 +37,7 @@ main(int argc, char **argv)
     {
       case 'j':
         data.threads = atoi(optarg);
-        if(data.threads == 0)
+        if(data.threads < 1)
         {
           fprintf(stderr, "\"%s\" is not a valid argument for -j \n", optarg);
           return -1;
@@ -59,37 +61,11 @@ main(int argc, char **argv)
     }
   }
 
-  if(parse_template(&data) < 0)
-    goto err;
+  FAIL_GOTO(parse_template(&data) < 0, err);
 
-  if(data.pre_cc)
-  {
-    pid_t pid = fork();
-    if(pid < 0)
-    {
-      ERR_NR(-errno, "Cant fork to execute \"%s\"", data.pre_cc);
-      goto err;
-    } else if(pid == 0)
-    {
-      execlp("/bin/sh", "/bin/sh", "-c", data.pre_cc, NULL);
+  FAIL_GOTO(pre_cc(&data) < 0, err);
 
-      ERR_NR(-errno, "Cant exec \"%s\"", data.pre_cc);
-      goto err;
-    } else 
-    {
-      int chld_rc;
-      waitpid(pid, &chld_rc, 0);
-      if(WIFEXITED(chld_rc) && WEXITSTATUS(chld_rc) != 0)
-      {
-        ERR_NR(CHLD_ERR, "\"%s\" exited with code %i", data.pre_cc, WEXITSTATUS(chld_rc));
-        goto err;
-      }
-    }
-  }
-
-  // printf("%s %s %s %s %s %i\n", data.srcdirs, data.incdirs, data.builddir, data.ext, data.cc, data.threads);
-  if(compile(&data, flags) < 0)
-    goto err;
+  FAIL_GOTO(compile(&data, flags) < 0, err);
 
   if(flags & OPTRUN)
   {
@@ -98,7 +74,7 @@ main(int argc, char **argv)
     printf("Executing \"%s\"...\n", path);
     execlp(path, path);
 
-    ERR_NR(-errno, "Cant exec \"%s\"", data.pre_cc);
+    ERR_NR(-errno, "Cant exec \"%s\"", path);
     goto err;
   }
 
