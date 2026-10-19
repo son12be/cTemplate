@@ -109,7 +109,7 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line, stru
           goto err;
         }
 
-        printf("Entering subdir \"%s\"...\n", dir);
+        LOG("Entering subdir \"%s\"...", dir);
         shell_exec(cmd);
 
         ERR_NR(-errno, "In SUBDIR: Cant execute \"%s\". At line %i", cmd, cur_line);
@@ -133,6 +133,12 @@ err:
     {
       if(!streq(line_cc, confTuples[i].key))
         continue; 
+
+      if(*((char**)confTuples[i].value))
+      {
+        WARN("Key \"%s\" was already specified", line_cc);
+        free(*((char**)confTuples[i].value));
+      }
 
       const size_t len = strlen(value) + 1;
       *((char**)confTuples[i].value) = malloc(len);

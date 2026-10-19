@@ -1,8 +1,20 @@
 #pragma once
 
 #include <errno.h>
+#include <stdio.h>
 
 #define STRERROR strerror(errno)
+
+/* WARN and LOG macros */
+#define WARN(...) \
+  fprintf(stderr, "\033[1;33m WARN\t\033[0m"); \
+  fprintf(stderr, __VA_ARGS__); \
+  fprintf(stderr, "\n")
+
+#define LOG(...) \
+  fprintf(stderr, "\033[1;34m INFO\t\033[0m"); \
+  fprintf(stderr, __VA_ARGS__); \
+  fprintf(stderr, "\n")
 
 /* log err ECODE */
 #ifdef DEBUG

@@ -71,7 +71,7 @@ main(int argc, char **argv)
   {
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "./%s/%s/%s", data.builddir, data.label, data.name);
-    printf("Executing \"%s\"...\n", path);
+    LOG("Executing \"%s\"...", path);
     execlp(path, path);
 
     ERR_NR(-errno, "Cant exec \"%s\"", path);
