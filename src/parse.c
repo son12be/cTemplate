@@ -28,6 +28,7 @@ struct tuple_t
     { "ARGS", &data->cc_args, 0 }, \
     { "NAME", &data->name, 1 }, \
     { "PRE_CC", &data->pre_cc, 0 }, \
+    { "PST_CC", &data->pst_cc, 0 }, \
   };
 
 

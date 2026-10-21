@@ -10,29 +10,25 @@
 #include "misc.h"
 
 int
-pre_cc(struct data_t *data)
+exec_cmd(const char *const cmd)
 {
-  if(data->pre_cc)
+  LOG("Executing \"%s\"", cmd);
+  pid_t pid = fork();
+  if(pid < 0)
   {
-    pid_t pid = fork();
-    if(pid < 0)
-    {
-      ERR(-errno, "Cant fork to execute \"%s\"", data->pre_cc);
-    } else if(pid == 0)
-    {
-      shell_exec(data->pre_cc);
+    ERR(-errno, "Cant fork to execute \"%s\"", cmd);
+  } else if(pid == 0)
+  {
+    shell_exec(cmd);
 
-      ERR_NR(-errno, "Cant execute \"%s\"", data->pre_cc);
-      exit(-1);
-    } else 
-    {
-      int chld_rc;
-      waitpid(pid, &chld_rc, 0);
-      if(WIFEXITED(chld_rc) && WEXITSTATUS(chld_rc) != 0)
-      {
-        ERR(CHLD_ERR, "\"%s\" exited with code %i", data->pre_cc, WEXITSTATUS(chld_rc));
-      }
-    }
+    ERR_NR(-errno, "Cant execute \"%s\"", cmd);
+    exit(-1);
+  }
+  int chld_rc;
+  waitpid(pid, &chld_rc, 0);
+  if(WIFEXITED(chld_rc) && WEXITSTATUS(chld_rc) != 0)
+  {
+    ERR(CHLD_ERR, "\"%s\" exited with code %i", cmd, WEXITSTATUS(chld_rc));
   }
 
   return 0;
@@ -87,8 +83,7 @@ exec_cc(vector_t *vec)
     /* if exec returns, then it failed */
     ERR_NR(-errno, "Cant execute \"%s\"", vec->data[0]);
     exit(errno); /* Children shall never return */
-  } else /* parent */
-  {
-    return 0;
   }
+  
+  return 0;
 }

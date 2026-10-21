@@ -63,19 +63,20 @@ main(int argc, char **argv)
 
   FAIL_GOTO(parse_template(&data) < 0, err);
 
-  FAIL_GOTO(pre_cc(&data) < 0, err);
+  if(data.pre_cc)
+    FAIL_GOTO(exec_cmd(data.pre_cc) < 0, err);
 
   FAIL_GOTO(compile(&data, flags) < 0, err);
+
+  if(data.pst_cc)
+    FAIL_GOTO(exec_cmd(data.pst_cc) < 0, err);
 
   if(flags & OPTRUN)
   {
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "./%s/%s/%s", data.builddir, data.label, data.name);
-    LOG("Executing \"%s\"...", path);
-    shell_exec(path);
 
-    ERR_NR(-errno, "Cant exec \"%s\"", path);
-    goto err;
+    FAIL_GOTO(exec_cmd(path) < 0, err);
   }
 
   destroy_data(&data);

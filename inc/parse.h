@@ -15,6 +15,7 @@ struct data_t
   char *name;
   char *ext;
   char *pre_cc;
+  char *pst_cc;
   char *label;
   FILE *flagFile;
   unsigned int threads;

@@ -1,10 +1,9 @@
 #pragma once
 
-#include "parse.h"
 #include "argv.h"
 
 int
-pre_cc(struct data_t *data);
+exec_cmd(const char *const cmd);
 
 void
 sigchld_handler(int);

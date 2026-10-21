@@ -16,6 +16,7 @@
 #include "compile.h"
 #include "argv.h"
 #include "util.h"
+#include "misc.h"
 
 sem_t sem;
 
@@ -68,8 +69,10 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, vector_t *ve
    * Should be fixed by 4d64a20; not sure tho
    */
   const int dir_fd = open(srcdir, 0);
-  FAIL_CODE(dir_fd < 0, -errno, "Cant open srcdir \"%s\"", srcdir);
-  FAIL_CODE(fdatasync(dir_fd) < 0, -errno, "Cant sync \"%s\"", srcdir); /* should we make it a warn? */
+  if(dir_fd < 0 || fdatasync(dir_fd) < 0)
+  {
+    WARN("Cant sync dir \"%s\": %s", srcdir, STRERROR);
+  }
 
   globfree(&file_list);
 
