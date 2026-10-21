@@ -81,6 +81,12 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line, stru
     /* handle special cases */
     if(streq(line_cc, "FLAGFILE"))
     {
+      if(data->flagFile)
+      {
+        WARN("Key \"FLAGFILE\" was already specified");
+        fclose(data->flagFile);
+      }
+
       data->flagFile = fopen(value, "r");
       FAIL_CODE(!data->flagFile, CANT_OPEN,  "At line %i. Cant open flagfile \"%s\"", cur_line, value);
       continue;
