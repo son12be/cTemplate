@@ -11,6 +11,12 @@ extern sem_t sem;
 
 #define streq(A, B) (strcmp(A, B) == 0)
 
+/* Util macro to check child failure. Exposes chld_rc and uses pid */
+#define WAITPID \
+  int chld_rc; \
+  waitpid(pid, &chld_rc, 0); \
+  if(WIFEXITED(chld_rc) && WEXITSTATUS(chld_rc) != 0)
+
 int
 strends(const char *A, const char *B);
 

@@ -24,11 +24,9 @@ exec_cmd(const char *const cmd)
     ERR_NR(-errno, "Cant execute \"%s\"", cmd);
     exit(-1);
   }
-  int chld_rc;
-  waitpid(pid, &chld_rc, 0);
-  if(WIFEXITED(chld_rc) && WEXITSTATUS(chld_rc) != 0)
+  WAITPID
   {
-    ERR(CHLD_ERR, "\"%s\" exited with code %i", cmd, WEXITSTATUS(chld_rc));
+    ERR(CHLD_ERR, "\"%s\" returned %i", cmd, WEXITSTATUS(chld_rc));
   }
 
   return 0;

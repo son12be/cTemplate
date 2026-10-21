@@ -8,7 +8,6 @@
 #include "parse.h"
 #include "argv.h"
 #include "err.h"
-#include "misc.h"
 
 inline static int
 lines(FILE *file)
@@ -41,10 +40,10 @@ argv_get_argc(const struct data_t *const data, int *extra)
     argc += lines(data->flagFile);
 
   /* to preallocate resulting .o files */
-  glob_t file_list;
-  file_list.gl_offs = 0;
   for(char *srcdir = strtok(data->srcdirs, " "); srcdir; srcdir = strtok(NULL, " "))
   {
+    glob_t file_list;
+
     char pattern[
       strlen(srcdir) + SLASH +
       sizeof("*.") + strlen(data->ext)
@@ -52,14 +51,14 @@ argv_get_argc(const struct data_t *const data, int *extra)
   
     snprintf(pattern, sizeof(pattern), "%s/*.%s", srcdir, data->ext);
 
-    if(glob(pattern, GLOB_NOSORT | GLOB_ERR | GLOB_DOOFFS, NULL, &file_list) != 0)
+    if(glob(pattern, GLOB_NOSORT | GLOB_ERR, NULL, &file_list) != 0)
     {
       globfree(&file_list);
-      ERR(NOMATCH, "Pattern was \"%s\"", pattern);
+      ERR(NOMATCH, "Pattern was \"%s\". Extension or srcdir may be wrong", pattern);
     }
     *extra += file_list.gl_pathc;
+    globfree(&file_list);
   }
-  globfree(&file_list);
 
   return argc;
 }
@@ -74,6 +73,7 @@ make_argv(vector_t *vec, const struct data_t *const data)
 {
   int extra = 0;
   vec->size = argv_get_argc(data, &extra);
+  FAIL(vec->size < 0);
 
   /* allocate */
   vec->data = malloc(sizeof(char*) * (vec->size + extra));

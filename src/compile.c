@@ -169,6 +169,14 @@ compile(struct data_t *data, const int flags)
     execvp(vec->data[0], vec->data);
 
     ERR_NR(-errno, "Cant exec \"%s\"", vec->data[0]);
+    report_err();
+    exit(-1);
+  } else
+  {
+    WAITPID
+    {
+      ERR_NR(CHLD_ERR, "\"%s\" returned %i", vec->data[0], chld_rc); // FIXME
+    }
   }
 
   vec->size -= file_list.gl_pathc;

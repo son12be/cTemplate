@@ -126,11 +126,9 @@ err:
         exit(-1);
       }
 
-      int chld_rc;
-      waitpid(pid, &chld_rc, 0);
-      if(WIFEXITED(chld_rc) && WEXITSTATUS(chld_rc) != 0)
+      WAITPID
       {
-        ERR(CHLD_ERR, "Failed to enter subdir at line %i", cur_line);
+        ERR(CHLD_ERR, "Entering subdir returned %i. At line %i", chld_rc, cur_line);
       }
 
       continue;
