@@ -128,7 +128,7 @@ err:
 
       WAITPID
       {
-        ERR(CHLD_ERR, "Entering subdir returned %i. At line %i", chld_rc, cur_line);
+        ERR(CHLD_ERR, "Entering subdir returned %i. At line %i", WEXITSTATUS(chld_rc), cur_line);
       }
 
       continue;

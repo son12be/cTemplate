@@ -175,7 +175,7 @@ compile(struct data_t *data, const int flags)
   {
     WAITPID
     {
-      ERR_NR(CHLD_ERR, "\"%s\" returned %i", vec->data[0], chld_rc); // FIXME
+      ERR_NR(CHLD_ERR, "\"%s\" returned %i", vec->data[0], WEXITSTATUS(chld_rc));
     }
   }
 
