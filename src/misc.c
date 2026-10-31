@@ -22,6 +22,7 @@ exec_cmd(const char *const cmd)
     shell_exec(cmd);
 
     ERR_NR(-errno, "Cant execute \"%s\"", cmd);
+    report_err();
     exit(-1);
   }
   WAITPID
@@ -80,6 +81,7 @@ exec_cc(vector_t *vec)
 
     /* if exec returns, then it failed */
     ERR_NR(-errno, "Cant execute \"%s\"", vec->data[0]);
+    report_err();
     exit(errno); /* Children shall never return */
   }
   
