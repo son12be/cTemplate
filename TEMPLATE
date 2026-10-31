@@ -7,7 +7,7 @@ global:
   CC clang
 
 debug:
-  ARGS -O0 -ggdb3 -fsanitize=address -DDEBUG
+  ARGS -O0 -ggdb3 -fsanitize=address -DDEBUG -fno-omit-frame-pointer
 
 release:
   ARGS -O3 -flto=thin
