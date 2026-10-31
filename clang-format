@@ -1,0 +1,10 @@
+BasedOnStyle: LLVM
+ColumnLimit: 80
+BreakBeforeTernaryOperators: true
+BreakBeforeBraces: Allman
+BreakAfterReturnType: All
+AllowShortIfStatementsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Empty
+UseTab: Never
+IndentWidth: 2

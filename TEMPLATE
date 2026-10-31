@@ -5,6 +5,7 @@ global:
   FLAGFILE compile_flags.txt
   EXT c
   CC clang
+  PRE_CC ./format.sh
 
 debug:
   ARGS -O0 -ggdb3 -fsanitize=address -DDEBUG -fno-omit-frame-pointer

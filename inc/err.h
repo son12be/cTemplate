@@ -6,14 +6,14 @@
 #define STRERROR strerror(errno)
 
 /* WARN and LOG macros */
-#define WARN(...) \
-  fprintf(stderr, "\033[1;33m WARN\t\033[0m"); \
-  fprintf(stderr, __VA_ARGS__); \
+#define WARN(...)                                                              \
+  fprintf(stderr, "\033[1;33m WARN\t\033[0m");                                 \
+  fprintf(stderr, __VA_ARGS__);                                                \
   fprintf(stderr, "\n")
 
-#define LOG(...) \
-  fprintf(stderr, "\033[1;34m INFO\t\033[0m"); \
-  fprintf(stderr, __VA_ARGS__); \
+#define LOG(...)                                                               \
+  fprintf(stderr, "\033[1;34m INFO\t\033[0m");                                 \
+  fprintf(stderr, __VA_ARGS__);                                                \
   fprintf(stderr, "\n")
 
 /* log err ECODE */
@@ -30,18 +30,18 @@
 /* log err ECODE and return -1 */
 #define ERR(ECODE, ...) return ERR_NR(ECODE, __VA_ARGS__)
 
-#define FAIL(EXPR)\
-  if(EXPR)\
+#define FAIL(EXPR)                                                             \
+  if (EXPR)                                                                    \
     return -1;
 // #define FAIL_NULL(EXPR)\
 //  if(!(EXPR))\
 //    return -1;
-#define FAIL_GOTO(EXPR, GOTO)\
-  if(EXPR)\
+#define FAIL_GOTO(EXPR, GOTO)                                                  \
+  if (EXPR)                                                                    \
     goto GOTO;
-#define FAIL_CODE(EXPR, ECODE, ...)\
-  if(EXPR)\
-    ERR(ECODE, __VA_ARGS__)
+#define FAIL_CODE(EXPR, ECODE, ...)                                            \
+  if (EXPR)                                                                    \
+  ERR(ECODE, __VA_ARGS__)
 
 typedef enum
 {

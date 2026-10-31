@@ -1,15 +1,14 @@
 #include <linux/limits.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "compile.h"
 #include "err.h"
-#include "util.h"
-#include "parse.h"
-#include "misc.h"
 #include "main_info.h"
+#include "misc.h"
+#include "parse.h"
 
 /* bro meson is so much better wtf */
 
@@ -24,54 +23,53 @@ main(int argc, char **argv)
 
   uint8_t flags = 0u;
   int opt;
-  while((opt = getopt(argc, argv, "j:frl:q")) != -1)
+  while ((opt = getopt(argc, argv, "j:frl:q")) != -1)
   {
-    switch(opt)
+    switch (opt)
     {
-      case 'j':
-        data.threads = atoi(optarg);
-        if(data.threads < 1)
-        {
-          fprintf(stderr, "\"%s\" is not a valid argument for -j \n", optarg);
-          return -1;
-        }
-        break;
-      case 'f':
-        flags |= OPTCOMP_FORCE;
-        break;
-      case 'r':
-        flags |= OPTRUN;
-        break;
-      case 'l':
-        data.label = optarg;
-        break;
-      case 'q':
-        flags |= OPTQUIET;
-        break;
-      case '?':
+    case 'j':
+      data.threads = atoi(optarg);
+      if (data.threads < 1)
+      {
+        fprintf(stderr, "\"%s\" is not a valid argument for -j \n", optarg);
         return -1;
-        break;
+      }
+      break;
+    case 'f':
+      flags |= OPTCOMP_FORCE;
+      break;
+    case 'r':
+      flags |= OPTRUN;
+      break;
+    case 'l':
+      data.label = optarg;
+      break;
+    case 'q':
+      flags |= OPTQUIET;
+      break;
+    case '?':
+      return -1;
+      break;
     }
   }
 
   FAIL_GOTO(parse_template(&data) < 0, err);
 
-  if(data.pre_cc)
+  if (data.pre_cc)
     FAIL_GOTO(exec_cmd(data.pre_cc) < 0, err);
 
   FAIL_GOTO(compile(&data, flags) < 0, err);
 
-  if(data.pst_cc)
+  if (data.pst_cc)
     FAIL_GOTO(exec_cmd(data.pst_cc) < 0, err);
 
-  if(flags & OPTRUN)
+  if (flags & OPTRUN)
   {
     char path[PATH_MAX];
-    snprintf(path, sizeof(path), "./%s/%s/%s", data.builddir,
-        data.label, data.name);
+    snprintf(path, sizeof(path), "./%s/%s/%s", data.builddir, data.label,
+             data.name);
 
-    FAIL_GOTO(run_pst_cc_bin(path, data.run_args, data.run_env) < 0,
-        err);
+    FAIL_GOTO(run_pst_cc_bin(path, data.run_args, data.run_env) < 0, err);
   }
 
   destroy_data(&data);
