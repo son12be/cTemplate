@@ -23,6 +23,8 @@ sem_t sem;
 static inline int
 compile_srcdir(const char *const srcdir, const struct data_t *data, vector_t *vec, int flags)
 {
+  int comp_n = 0;
+
   glob_t file_list;
   char pattern[
     strlen(srcdir) + SLASH +
@@ -60,6 +62,8 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, vector_t *ve
 
     if(exec_cc(vec) < 0)
       goto err;
+
+    comp_n++;
   }
 
   /* BUG
@@ -76,7 +80,7 @@ compile_srcdir(const char *const srcdir, const struct data_t *data, vector_t *ve
 
   globfree(&file_list);
 
-  return 0;
+  return comp_n;
 
 err:
   globfree(&file_list);
@@ -107,14 +111,19 @@ compile(struct data_t *data, const int flags)
     printf("\n");
   }
 
+  int comp_n = 0;
+
   /* loop through specified srcdirs */
   for(char *srcdir = strtok(data->srcdirs, " "); srcdir; srcdir = strtok(NULL, " "))
   {
-    if(compile_srcdir(srcdir, data, vec, flags) < 0)
+    int rc = compile_srcdir(srcdir, data, vec, flags);
+    if(rc < 0)
     {
       destroy_argv(&vec);
       return -1;
     }
+
+    comp_n += rc;
   }
   for(int chld_pid, chld_rc; (chld_pid = waitpid(-1, &chld_rc, WNOHANG)) > -1;)
   {
@@ -123,6 +132,13 @@ compile(struct data_t *data, const int flags)
       destroy_argv(&vec);
       ERR(CHLD_ERR, "A child returned %i", WEXITSTATUS(chld_rc));
     }
+  }
+
+  if(comp_n == 0)
+  {
+    LOG("Nothing to do");
+    destroy_argv(&vec);
+    return 0;
   }
 
   /* move eveything by one to overwrite '-c' */
