@@ -4,21 +4,21 @@ A file named `TEMPLATE` should be in your project directory, this file
 specifies basic data for _cTemple_ to compile your project.
 
 ### TEMPLATE contents
-The template shall have:\
-&nbsp; **NAME**: The name of your final binary. Placed inside _BUILDDIR_.\
-&nbsp; **SRCDIRS**: Space-separated list of the directories where your source files are.\
-&nbsp; **BUILDDIR**: The directory to place the binary of your project. In a _BUILDDIR_/*cur_label*/ format.\
-&nbsp; **CC**: The name of the compiler.\
-&nbsp; **EXT**: The extension of your source files.
+The template shall have:
+- **NAME**: The name of your final binary. Placed inside _BUILDDIR_.
+- **SRCDIRS**: Space-separated list of the directories where your source files are.
+- **BUILDDIR**: The directory to place the binary of your project. In a _BUILDDIR_/*cur_label*/ format.
+- **CC**: The name of the compiler.
+- **EXT**: The extension of your source files.
 
-Aditionally, the template may contain:\
-&nbsp; **ARGS**: Optional arguments passed to *CC*.\
-&nbsp; **FLAGFILE**: A file contaning arguments provided to _CC_. One argument per line.\
-&nbsp; **SUBDIR**: A directory that _cTemple_ will chdir into and execute itself. May provide arguments passed to _cTemple_ after the dir.\
-&nbsp; **PRE_CC**: Passed to _/bin/sh_ and executed before any compilation is done.\
-&nbsp; **PST_CC**: Same as *PRE_CC*, but done after the build process.
-&nbsp; **RUN_ARGS**: Arguments used with the _-r_ option.\
-&nbsp; **RUN_ENV**: Environments variable used with the _r_ option. In a _name=value_ format.
+Aditionally, the template may contain:
+- **ARGS**: Optional arguments passed to *CC*.
+- **FLAGFILE**: A file contaning arguments provided to _CC_. One argument per line.
+- **SUBDIR**: A directory that _cTemple_ will chdir into and execute itself. May provide arguments passed to _cTemple_ after the dir.
+- **PRE_CC**: Passed to _/bin/sh_ and executed before any compilation is done.
+- **PST_CC**: Same as *PRE_CC*, but done after the build process
+- **RUN_ARGS**: Arguments used with the _-r_ option.
+- **RUN_ENV**: Environments variable used with the _r_ option. In a _name=value_ format.
 
 All paths are relative to the template.
 
@@ -34,12 +34,12 @@ _cTemple_ searchs for a _global label_ (named simply `global`) before *cur_label
 All keys specified in the _global label_ can be overwritten by other labels.
 
 ## Options
-_cTemple_ accepts only 3 options:\
-&nbsp; **-jN**: Number of max parallel jobs to use, where `N` is the number.\
-&nbsp; **-f**: Dont check if file changed. Compile everything.\
-&nbsp; **-r**: Run the resulting binary after build process. See _RUN*_ templates for arguments and environment variables passed.\
-&nbsp; **-q**: Dont echo the compiler nor flags used.\
-&nbsp; **-l** ***label***: Specify the *cur_label*.
+_cTemple_ accepts only 3 options:
+- **-jN**: Number of max parallel jobs to use, where `N` is the number.
+- **-f**: Dont check if file changed. Compile everything.
+- **-r**: Run the resulting binary after build process. See _RUN*_ templates for arguments and environment variables passed.
+- **-q**: Dont echo the compiler nor flags used.
+- **-l** ***label***: Specify the *cur_label*.
 
 # TODO
 Most likely almost everything. Not even sure if multiple srcdirs work.
