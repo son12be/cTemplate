@@ -16,20 +16,22 @@ struct tuple_t
 {
   const char *key;
   void *value;
-  uint8_t required;
+  bool required;
 };
 
 #define GET_CONF_TABLE \
   struct tuple_t confTuples[] = \
   { \
-    { "SRCDIRS", &data->srcdirs, 1 }, \
-    { "BUILDDIR", &data->builddir, 1 }, \
-    { "EXT", &data->ext, 1 }, \
-    { "CC", &data->cc, 1 }, \
-    { "ARGS", &data->cc_args, 0 }, \
-    { "NAME", &data->name, 1 }, \
-    { "PRE_CC", &data->pre_cc, 0 }, \
-    { "PST_CC", &data->pst_cc, 0 }, \
+    { "SRCDIRS", &data->srcdirs, true }, \
+    { "BUILDDIR", &data->builddir, true }, \
+    { "EXT", &data->ext, true }, \
+    { "CC", &data->cc, true }, \
+    { "NAME", &data->name, true }, \
+    { "ARGS", &data->cc_args, false }, \
+    { "PRE_CC", &data->pre_cc, false }, \
+    { "PST_CC", &data->pst_cc, false }, \
+    { "RUN_ARGS", &data->run_args, false }, \
+    { "RUN_ENV", &data->run_env, false }, \
   };
 
 

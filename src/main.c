@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "compile.h"
 #include "err.h"
@@ -17,17 +18,9 @@ main(int argc, char **argv)
 {
   arg_init(argc, argv);
 
-  struct data_t data = 
-  {
-    .srcdirs = 0,
-    .builddir = 0,
-    .ext = 0,
-    .cc = 0,
-    .cc_args = 0,
-    .pre_cc = 0,
-    .threads = 1,
-    .flagFile = NULL,
-  };
+  struct data_t data;
+  memset(&data, 0, sizeof(data));
+  data.threads = 1;
 
   uint8_t flags = 0u;
   int opt;
@@ -74,9 +67,11 @@ main(int argc, char **argv)
   if(flags & OPTRUN)
   {
     char path[PATH_MAX];
-    snprintf(path, sizeof(path), "./%s/%s/%s", data.builddir, data.label, data.name);
+    snprintf(path, sizeof(path), "./%s/%s/%s", data.builddir,
+        data.label, data.name);
 
-    FAIL_GOTO(exec_cmd(path) < 0, err);
+    FAIL_GOTO(run_pst_cc_bin(path, data.run_args, data.run_env) < 0,
+        err);
   }
 
   destroy_data(&data);

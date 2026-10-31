@@ -13,3 +13,7 @@ should_compile(const char *const source_path, const char *const object_path, con
 
 int
 exec_cc(vector_t *vec);
+
+int
+run_pst_cc_bin(const char *const path, const char *const args, 
+    const char *const env);

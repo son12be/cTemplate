@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -86,4 +87,41 @@ exec_cc(vector_t *vec)
   }
   
   return 0;
+}
+
+int
+run_pst_cc_bin(const char *const path, const char *const args,
+    const char *const env)
+{
+  if(env)
+  {
+    for(char *tok = strtok(env, " ");
+        tok;
+        tok = strtok(NULL, " "))
+    {
+      char *equal = strchr(tok, '=');
+      if(!equal)
+      {
+        WARN("In RUN_ENV: token \"%s\" must have an equal sign", tok);
+        continue;
+      }
+      
+      *equal = '\0';
+      char *val = equal + 1;
+
+      setenv(tok, val, true);
+    }
+  }
+
+  const size_t len = strlen(path) +
+    (args ? strlen(args) + 1
+     : 0) + 1;
+
+  char cmd[len];
+  if(args)
+    snprintf(cmd, len, "%s %s", path, args);
+  else
+    snprintf(cmd, len, "%s", path);
+
+  return exec_cmd(cmd);
 }

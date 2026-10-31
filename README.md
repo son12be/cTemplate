@@ -17,6 +17,8 @@ Aditionally, the template may contain:\
 &nbsp; **SUBDIR**: A directory that _cTemple_ will chdir into and execute itself. May provide arguments passed to _cTemple_ after the dir.\
 &nbsp; **PRE_CC**: Passed to _/bin/sh_ and executed before any compilation is done.\
 &nbsp; **PST_CC**: Same as *PRE_CC*, but done after the build process.
+&nbsp; **RUN_ARGS**: Arguments used with the _-r_ option.\
+&nbsp; **RUN_ENV**: Environments variable used with the _r_ option. In a _name=value_ format.
 
 All paths are relative to the template.
 
@@ -35,7 +37,7 @@ All keys specified in the _global label_ can be overwritten by other labels.
 _cTemple_ accepts only 3 options:\
 &nbsp; **-jN**: Number of max parallel jobs to use, where `N` is the number.\
 &nbsp; **-f**: Dont check if file changed. Compile everything.\
-&nbsp; **-r**: Run the resulting binary after build process.\
+&nbsp; **-r**: Run the resulting binary after build process. See _RUN*_ templates for arguments and environment variables passed.\
 &nbsp; **-q**: Dont echo the compiler nor flags used.\
 &nbsp; **-l** ***label***: Specify the *cur_label*.
 

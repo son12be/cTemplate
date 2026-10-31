@@ -86,7 +86,8 @@ err:
 int
 compile(struct data_t *data, const int flags)
 {
-  FAIL_CODE(sem_init(&sem, 0, data->threads) < 0, CANT_OPEN, "Cant open semaphore");
+  FAIL_CODE(sem_init(&sem, 0, data->threads) < 0,
+      CANT_OPEN, "Cant open semaphore. Val was %i", data->threads);
 
   if(!data->label)
     data->label = "";
