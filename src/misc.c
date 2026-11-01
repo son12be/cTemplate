@@ -36,9 +36,9 @@ exec_cmd(const char *const cmd)
 
 int
 should_compile(const char *const source_path, const char *const object_path,
-               const int comp_force)
+               const int flags)
 {
-  if (comp_force || access(object_path, F_OK) != 0)
+  if (flags & (OPTCOMP_FORCE | OPTDEL) || access(object_path, F_OK) != 0)
     return 1;
 
   struct stat st;

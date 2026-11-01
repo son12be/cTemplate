@@ -8,6 +8,7 @@
 #define OPTRUN (1u << 1)
 #define OPTWAIT (1u << 2)
 #define OPTQUIET (1u << 3)
+#define OPTDEL (1u << 4)
 
 #define streq(A, B) (strcmp(A, B) == 0)
 

@@ -39,6 +39,8 @@ _cTemple_ accepts only 3 options:
 - **-f**: Dont check if file changed. Compile everything.
 - **-r**: Run the resulting binary after build process. See _RUN*_ templates for arguments and environment variables passed.
 - **-q**: Dont echo the compiler nor flags used.
+- **-d**: Delete all object files and compile again. Used if a source files was
+  deleted.
 - **-l** ***label***: Specify the *cur_label*.
 
 # TODO

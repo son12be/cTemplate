@@ -48,9 +48,8 @@ compile_srcdir(const char *const srcdir, const struct data_t *data,
     }
     snprintf(outpath_end, NAME_MAX, "%s.o", basename(vec->data[ARGV_PATH_I]));
 
-    int changed =
-        should_compile(vec->data[ARGV_PATH_I], vec->data[ARGV_OUTPATH_I],
-                       flags & OPTCOMP_FORCE);
+    int changed = should_compile(vec->data[ARGV_PATH_I],
+                                 vec->data[ARGV_OUTPATH_I], flags);
 
     FAIL_GOTO(changed < 0, err);
     if (!changed)
@@ -105,6 +104,25 @@ compile(struct data_t *data, const int flags)
     for (int i = vec->first_opt; i < ARGV_PATH_I; ++i)
       printf(" %s", vec->data[i]);
     printf("\n");
+  }
+
+  if (flags & OPTDEL)
+  {
+    char pattern[strlen(data->builddir) + SLASH + strlen(data->label) + SLASH +
+                 sizeof("*.o")];
+    snprintf(pattern, sizeof(pattern), "%s/%s/*.o", data->builddir,
+             data->label);
+
+    glob_t globlist;
+    glob(pattern, GLOB_ERR | GLOB_NOSORT, NULL, &globlist);
+
+    for (size_t i = 0; i < globlist.gl_pathc; ++i)
+    {
+      unlink(globlist.gl_pathv[i]);
+    }
+
+    if (globlist.gl_pathv)
+      globfree(&globlist);
   }
 
   int comp_n = 0;

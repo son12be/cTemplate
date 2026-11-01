@@ -23,7 +23,7 @@ main(int argc, char **argv)
 
   uint8_t flags = 0u;
   int opt;
-  while ((opt = getopt(argc, argv, "j:frl:q")) != -1)
+  while ((opt = getopt(argc, argv, "j:frdl:q")) != -1)
   {
     switch (opt)
     {
@@ -46,6 +46,9 @@ main(int argc, char **argv)
       break;
     case 'q':
       flags |= OPTQUIET;
+      break;
+    case 'd':
+      flags |= OPTDEL;
       break;
     case '?':
       return -1;
