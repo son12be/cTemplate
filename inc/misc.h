@@ -1,14 +1,15 @@
 #pragma once
 
 #include <semaphore.h>
+#include <stdint.h>
 
 #include "argv.h"
 
-#define OPTCOMP_FORCE (1u << 0)
-#define OPTRUN (1u << 1)
-#define OPTWAIT (1u << 2)
-#define OPTQUIET (1u << 3)
-#define OPTDEL (1u << 4)
+#define OPTCOMP_FORCE (1u << 0u)
+#define OPTRUN (1u << 1u)
+#define OPTWAIT (1u << 2u)
+#define OPTQUIET (1u << 3u)
+#define OPTDEL (1u << 4u)
 
 #define streq(A, B) (strcmp(A, B) == 0)
 
@@ -28,7 +29,7 @@ sigchld_handler(int);
 
 int
 should_compile(const char *const source_path, const char *const object_path,
-               const int comp_force);
+               const uint8_t flags);
 
 int
 exec_cc(vector_t *vec);

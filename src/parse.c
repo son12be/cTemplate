@@ -14,7 +14,7 @@
 struct tuple_t
 {
   const char *key;
-  void *value;
+  char **value;
   bool required;
 };
 
@@ -38,8 +38,8 @@ destroy_data(struct data_t *data)
   GET_CONF_TABLE;
   for (size_t i = 0; i < sizeof(confTuples) / sizeof(confTuples[0]); ++i)
   {
-    if (*((char **)confTuples[i].value))
-      free(*((char **)confTuples[i].value));
+    if (*confTuples[i].value)
+      free(*confTuples[i].value);
   }
 }
 
@@ -47,9 +47,10 @@ static inline int
 actual_parse(struct data_t *const data, const FILE *template, int cur_line,
              struct tuple_t *const confTuples, const unsigned int n)
 {
-  int label_hit = data->label ? 1 : 0;
+  bool label_hit_pending = data->label != nullptr;
+
   char line[LARGE_ENOUGH_LINE];
-  while ((fgets(line, sizeof(line), template)) != NULL)
+  while ((fgets(line, sizeof(line), template)) != nullptr)
   {
     cur_line++;
     char *key = line;
@@ -61,11 +62,13 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line,
     /* found another label, time to stop */
     if (strstr(key, ":\0"))
     {
-      if (label_hit)
+      if (label_hit_pending)
+      {
         return 0;
+      }
       else
       {
-        label_hit = 1;
+        label_hit_pending = true;
         continue;
       }
     }
@@ -136,16 +139,16 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line,
       if (!streq(key, confTuples[i].key))
         continue;
 
-      if (*((char **)confTuples[i].value))
+      if (*confTuples[i].value)
       {
         WARN("Key \"%s\" was already specified", key);
-        free(*((char **)confTuples[i].value));
+        free(*confTuples[i].value);
       }
 
       const size_t len = strlen(value) + 1;
-      *((char **)confTuples[i].value) = malloc(len);
+      *confTuples[i].value = malloc(len);
 
-      snprintf(*((char **)confTuples[i].value), len, "%s", value);
+      snprintf(*confTuples[i].value, len, "%s", value);
 
       found = 1;
       break;
@@ -169,7 +172,7 @@ find_label(const FILE *template, const char *const label)
   if (!label)
     goto first_label;
 
-  const int label_len = strlen(label);
+  const size_t label_len = strlen(label);
   for (char line[LARGE_ENOUGH_LINE];
        fgets(line, sizeof(line), template) != NULL;)
   {
@@ -205,8 +208,8 @@ parse_template(struct data_t *data)
 
   GET_CONF_TABLE;
 
-  int cur_line = 0;
-  if ((cur_line = find_label(template, "global")) >= 0)
+  int cur_line = find_label(template, "global");
+  if (cur_line >= 0)
   {
     // if(!data->label) data->label = "global";
     FAIL_GOTO(actual_parse(data, template, cur_line, confTuples,
@@ -214,7 +217,8 @@ parse_template(struct data_t *data)
               err);
   }
 
-  if ((cur_line = find_label(template, data->label)) >= 0)
+  cur_line = find_label(template, data->label);
+  if (cur_line >= 0)
   {
     FAIL_GOTO(actual_parse(data, template, cur_line, confTuples,
                            sizeof(confTuples) / sizeof(struct tuple_t)) < 0,
@@ -230,7 +234,7 @@ parse_template(struct data_t *data)
 
   for (unsigned int i = 0; i < sizeof(confTuples) / sizeof(struct tuple_t); ++i)
   {
-    if (confTuples[i].required && !*((char **)confTuples[i].value))
+    if (confTuples[i].required && !*confTuples[i].value)
       ERR(BAD_FORMAT, "A value for key \"%s\" is required", confTuples[i].key);
   }
 

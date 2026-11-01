@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -36,7 +37,7 @@ exec_cmd(const char *const cmd)
 
 int
 should_compile(const char *const source_path, const char *const object_path,
-               const int flags)
+               const uint8_t flags)
 {
   if (flags & (OPTCOMP_FORCE | OPTDEL) || access(object_path, F_OK) != 0)
     return 1;
@@ -99,7 +100,7 @@ run_pst_cc_bin(const char *const path, const char *const args,
 {
   if (env)
   {
-    for (char *tok = strtok(env, " "); tok; tok = strtok(NULL, " "))
+    for (char *tok = strtok(env, " "); tok; tok = strtok(nullptr, " "))
     {
       char *equal = strchr(tok, '=');
       if (!equal)
@@ -111,7 +112,7 @@ run_pst_cc_bin(const char *const path, const char *const args,
       *equal = '\0';
       char *val = equal + 1;
 
-      setenv(tok, val, true);
+      setenv(tok, val, 1);
     }
   }
 
@@ -162,7 +163,7 @@ sigchld_handler(int)
 int
 shell_exec(char *cmd)
 {
-  execlp("/bin/sh", "/bin/sh", "-c", cmd, NULL);
+  execlp("/bin/sh", "/bin/sh", "-c", cmd, nullptr);
 
   return -1;
 }

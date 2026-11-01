@@ -1,7 +1,7 @@
 #include "main_info.h"
 
 static int s_Argc = 0;
-static const char **s_Argv = 0;
+static const char **s_Argv = nullptr;
 
 void
 arg_init(int argc, char **argv)

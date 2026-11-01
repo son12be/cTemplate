@@ -4,11 +4,11 @@
 
 #include "err.h"
 
-static char s_Context[512];
+static char s_Context[512]; // NOLINT
 static int s_Code = 0;
 
 #ifdef DEBUG
-static char *s_Location = 0;
+static char *s_Location = nullptr;
 #endif
 
 int

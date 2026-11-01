@@ -1,0 +1,10 @@
+-I./inc/
+-std=c23
+-Wall
+-Wextra
+-Werror
+-pedantic
+-pedantic-errors
+-Wno-incompatible-pointer-types
+-Wno-incompatible-pointer-types-discards-qualifiers
+-D_XOPEN_SOURCE=700

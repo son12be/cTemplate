@@ -1,0 +1,12 @@
+Checks:
+  readability-implicit-*,
+  readability-inconsistent-*,
+  readability-function-size,
+  readability-magic-*,
+  readability-simplify-*,
+  performance-*,
+  modern*,
+  -modern*macro*enum,
+  bugprone-narrowing-*,
+  bugprone-unused-*,
+  bugprone-suspicious-*

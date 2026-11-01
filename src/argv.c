@@ -26,15 +26,16 @@ lines(FILE *file)
 }
 
 static inline int
-argv_get_argc(const struct data_t *const data, int *extra)
+argv_get_argc(const struct data_t *const data, size_t *extra)
 {
-  int argc = 6; /* at least for cc, -c, filepath, -o; path, and NULL */
+  // NOLINTNEXTLINE
+  int argc = 6; /* at least for cc, -c, filepath, -o; path, and nullptr */
 
   /* get argc */
   if (data->cc_args)
   {
     argc++;
-    for (char *s = data->cc_args; (s = strchr(s, ' ')) != NULL; s++, argc++)
+    for (char *s = data->cc_args; (s = strchr(s, ' ')) != nullptr; s++, argc++)
       ;
   }
   if (data->flagFile)
@@ -42,7 +43,7 @@ argv_get_argc(const struct data_t *const data, int *extra)
 
   /* to preallocate resulting .o files */
   for (char *srcdir = strtok(data->srcdirs, " "); srcdir;
-       srcdir = strtok(NULL, " "))
+       srcdir = strtok(nullptr, " "))
   {
     glob_t file_list;
 
@@ -50,7 +51,7 @@ argv_get_argc(const struct data_t *const data, int *extra)
 
     snprintf(pattern, sizeof(pattern), "%s/*.%s", srcdir, data->ext);
 
-    if (glob(pattern, GLOB_NOSORT | GLOB_ERR, NULL, &file_list) != 0)
+    if (glob(pattern, GLOB_NOSORT | GLOB_ERR, nullptr, &file_list) != 0)
     {
       globfree(&file_list);
       ERR(NOMATCH, "Pattern was \"%s\". Extension or srcdir may be wrong",
@@ -71,7 +72,7 @@ argv_get_argc(const struct data_t *const data, int *extra)
 int
 make_argv(vector_t *vec, const struct data_t *const data)
 {
-  int extra = 0;
+  size_t extra = 0;
   vec->size = argv_get_argc(data, &extra);
   FAIL(vec->size < 0);
 
@@ -84,7 +85,7 @@ make_argv(vector_t *vec, const struct data_t *const data)
 
   int i_arg = 1;
   for (char *token = strtok(data->cc_args, " "); token;
-       token = strtok(NULL, " "), ++i_arg)
+       token = strtok(nullptr, " "), ++i_arg)
     vec->data[i_arg] = token;
 
   vec->data[i_arg++] = "-c";
@@ -97,7 +98,7 @@ make_argv(vector_t *vec, const struct data_t *const data)
   /* get args from flagFile */
   char *line = malloc(LARGE_ENOUGH_LINE);
   FAIL_CODE(!line, MALLOC, "Cant allocate line buffer");
-  for (; (fgets(line, LARGE_ENOUGH_LINE, data->flagFile)) != NULL; ++i_arg)
+  for (; (fgets(line, LARGE_ENOUGH_LINE, data->flagFile)) != nullptr; ++i_arg)
   {
     line[strcspn(line, "\n")] = '\0';
     vec->data[i_arg] = line;
@@ -115,9 +116,10 @@ make_argv(vector_t *vec, const struct data_t *const data)
   free(line);
 
 end:
-  const int maxLenSz = strlen(data->builddir) + SLASH + strlen(data->label) +
-                       SLASH + NAME_MAX + 1 /* NULL */;
-  vec->data[ARGV_OUTPATH_I] = malloc(maxLenSz);
+  const size_t out_max_len = strlen(data->builddir) + SLASH +
+                             strlen(data->label) + SLASH + NAME_MAX +
+                             1 /* nullptr */;
+  vec->data[ARGV_OUTPATH_I] = malloc(out_max_len);
   if (!vec->data[ARGV_OUTPATH_I])
   {
     for (int i = vec->first_opt; i < ARGV_OFLAG_I; ++i)
@@ -125,15 +127,15 @@ end:
     free(vec->data);
     ERR(MALLOC, "Cant allocate outpath");
   }
-  snprintf(vec->data[ARGV_OUTPATH_I], maxLenSz, "%s/%s/", data->builddir,
+  snprintf(vec->data[ARGV_OUTPATH_I], out_max_len, "%s/%s/", data->builddir,
            data->label);
   if (access(vec->data[ARGV_OUTPATH_I], F_OK))
     FAIL_CODE(mkdir(vec->data[ARGV_OUTPATH_I], 0755), -errno,
               "Cant create directory \"%s\"", vec->data[ARGV_OUTPATH_I]);
 
   vec->data[ARGV_OFLAG_I] = "-o";
-  vec->data[ARGV_PATH_I] = NULL;
-  vec->data[ARGV_NULL_I] = NULL;
+  vec->data[ARGV_PATH_I] = nullptr;
+  vec->data[ARGV_NULL_I] = nullptr;
   return 0;
 }
 
@@ -147,6 +149,6 @@ destroy_argv(vector_t **vector)
   free(vec->data);
 
 #ifndef DEBUG
-  *vector = NULL;
+  *vector = nullptr;
 #endif
 }

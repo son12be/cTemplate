@@ -3,6 +3,7 @@
 #include <glob.h>
 #include <libgen.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +21,7 @@ sem_t sem;
 
 static inline int
 compile_srcdir(const char *const srcdir, const struct data_t *data,
-               vector_t *vec, int flags)
+               vector_t *vec, uint8_t flags)
 {
   int comp_n = 0;
 
@@ -30,7 +31,7 @@ compile_srcdir(const char *const srcdir, const struct data_t *data,
   snprintf(pattern, sizeof(pattern), "%s/*.%s", srcdir, data->ext);
 
   /* TODO maybe store rc? */
-  FAIL_CODE(glob(pattern, GLOB_NOSORT | GLOB_ERR, NULL, &file_list) != 0,
+  FAIL_CODE(glob(pattern, GLOB_NOSORT | GLOB_ERR, nullptr, &file_list) != 0,
             NOMATCH, "Pattern was \"%s\"", pattern);
 
   /* loop through returned paths */
@@ -83,7 +84,7 @@ err:
 }
 
 int
-compile(struct data_t *data, const int flags)
+compile(struct data_t *data, const uint8_t flags)
 {
   FAIL_CODE(sem_init(&sem, 0, data->threads) < 0, CANT_OPEN,
             "Cant open semaphore. Val was %i", data->threads);
@@ -96,7 +97,7 @@ compile(struct data_t *data, const int flags)
   vector_t *vec = &vector;
 
   const struct sigaction sig = {.sa_handler = sigchld_handler};
-  sigaction(SIGCHLD, &sig, NULL);
+  sigaction(SIGCHLD, &sig, nullptr);
 
   if (!(flags & OPTQUIET))
   {
@@ -114,7 +115,7 @@ compile(struct data_t *data, const int flags)
              data->label);
 
     glob_t globlist;
-    glob(pattern, GLOB_ERR | GLOB_NOSORT, NULL, &globlist);
+    glob(pattern, GLOB_ERR | GLOB_NOSORT, nullptr, &globlist);
 
     for (size_t i = 0; i < globlist.gl_pathc; ++i)
     {
@@ -129,7 +130,7 @@ compile(struct data_t *data, const int flags)
 
   /* loop through specified srcdirs */
   for (char *srcdir = strtok(data->srcdirs, " "); srcdir;
-       srcdir = strtok(NULL, " "))
+       srcdir = strtok(nullptr, " "))
   {
     int rc = compile_srcdir(srcdir, data, vec, flags);
     if (rc < 0)
@@ -172,7 +173,7 @@ compile(struct data_t *data, const int flags)
                sizeof("*.o")];
 
   snprintf(pattern, sizeof(pattern), "%s/%s/*.o", data->builddir, data->label);
-  if (glob(pattern, GLOB_NOSORT | GLOB_ERR, NULL, &file_list) != 0)
+  if (glob(pattern, GLOB_NOSORT | GLOB_ERR, nullptr, &file_list) != 0)
   {
     destroy_argv(&vec);
     globfree(&file_list);
@@ -184,7 +185,7 @@ compile(struct data_t *data, const int flags)
 
   memcpy(vec->data + ARGV_NULL_I, file_list.gl_pathv,
          sizeof(char *) * (file_list.gl_pathc + 1));
-  vec->size += file_list.gl_pathc;
+  vec->size += file_list.gl_pathc; // NOLINT size cant be uint
 
 #ifdef DEBUG
   for (int i = 0; i < ARGV_NULL_I; ++i)
@@ -216,7 +217,7 @@ compile(struct data_t *data, const int flags)
     }
   }
 
-  vec->size -= file_list.gl_pathc;
+  vec->size -= file_list.gl_pathc; // NOLINT size cant be uint
   destroy_argv(&vec);
   globfree(&file_list);
 
