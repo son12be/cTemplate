@@ -23,8 +23,10 @@ struct data_t
   unsigned int threads;
 };
 
+extern struct data_t data;
+
 int
-parse_template(struct data_t *data);
+parse_template();
 
 void
-destroy_data(struct data_t *data);
+destroy_data();

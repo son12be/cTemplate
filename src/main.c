@@ -10,6 +10,8 @@
 #include "misc.h"
 #include "parse.h"
 
+struct data_t data;
+
 /* bro meson is so much better wtf */
 
 int
@@ -17,7 +19,6 @@ main(int argc, char **argv)
 {
   arg_init(argc, argv);
 
-  struct data_t data;
   memset(&data, 0, sizeof(data));
   data.threads = 1;
 
@@ -56,7 +57,7 @@ main(int argc, char **argv)
     }
   }
 
-  FAIL_GOTO(parse_template(&data) < 0, err);
+  FAIL_GOTO(parse_template() < 0, err);
 
   if (data.pre_cc)
     FAIL_GOTO(exec_cmd(data.pre_cc) < 0, err);
@@ -75,10 +76,10 @@ main(int argc, char **argv)
     FAIL_GOTO(run_pst_cc_bin(path, data.run_args, data.run_env) < 0, err);
   }
 
-  destroy_data(&data);
+  destroy_data();
   return 0;
 
 err:
-  destroy_data(&data);
+  destroy_data();
   return report_err();
 }

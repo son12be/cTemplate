@@ -18,24 +18,22 @@ struct tuple_t
   bool required;
 };
 
-#define GET_CONF_TABLE                                                         \
-  struct tuple_t confTuples[] = {                                              \
-      {"SRCDIRS", &data->srcdirs, true},                                       \
-      {"BUILDDIR", &data->builddir, true},                                     \
-      {"EXT", &data->ext, true},                                               \
-      {"CC", &data->cc, true},                                                 \
-      {"NAME", &data->name, true},                                             \
-      {"ARGS", &data->cc_args, false},                                         \
-      {"PRE_CC", &data->pre_cc, false},                                        \
-      {"PST_CC", &data->pst_cc, false},                                        \
-      {"RUN_ARGS", &data->run_args, false},                                    \
-      {"RUN_ENV", &data->run_env, false},                                      \
-  };
+const struct tuple_t confTuples[] = {
+    {"SRCDIRS", &data.srcdirs, true},
+    {"BUILDDIR", &data.builddir, true},
+    {"EXT", &data.ext, true},
+    {"CC", &data.cc, true},
+    {"NAME", &data.name, true},
+    {"ARGS", &data.cc_args, false},
+    {"PRE_CC", &data.pre_cc, false},
+    {"PST_CC", &data.pst_cc, false},
+    {"RUN_ARGS", &data.run_args, false},
+    {"RUN_ENV", &data.run_env, false},
+};
 
 void
-destroy_data(struct data_t *data)
+destroy_data()
 {
-  GET_CONF_TABLE;
   for (size_t i = 0; i < sizeof(confTuples) / sizeof(confTuples[0]); ++i)
   {
     if (*confTuples[i].value)
@@ -44,10 +42,10 @@ destroy_data(struct data_t *data)
 }
 
 static inline int
-actual_parse(struct data_t *const data, const FILE *template, int cur_line,
+actual_parse(const FILE *template, int cur_line,
              struct tuple_t *const confTuples, const unsigned int n)
 {
-  bool label_hit_pending = data->label != nullptr;
+  bool label_hit_pending = data.label != nullptr;
 
   char line[LARGE_ENOUGH_LINE];
   while ((fgets(line, sizeof(line), template)) != nullptr)
@@ -89,14 +87,14 @@ actual_parse(struct data_t *const data, const FILE *template, int cur_line,
     /* handle special cases */
     if (streq(key, "FLAGFILE"))
     {
-      if (data->flagFile)
+      if (data.flagFile)
       {
         WARN("Key \"FLAGFILE\" was already specified");
-        fclose(data->flagFile);
+        fclose(data.flagFile);
       }
 
-      data->flagFile = fopen(value, "r");
-      FAIL_CODE(!data->flagFile, CANT_OPEN,
+      data.flagFile = fopen(value, "r");
+      FAIL_CODE(!data.flagFile, CANT_OPEN,
                 "At line %i. Cant open flagfile \"%s\"", cur_line, value);
       continue;
     }
@@ -200,33 +198,30 @@ first_label:
 }
 
 int
-parse_template(struct data_t *data)
+parse_template()
 {
   const FILE *template = fopen(TEMPLATE_FILENAME, "r");
   if (!template)
     ERR(CANT_OPEN, "Template file (%s)", TEMPLATE_FILENAME);
 
-  GET_CONF_TABLE;
-
   int cur_line = find_label(template, "global");
   if (cur_line >= 0)
   {
-    // if(!data->label) data->label = "global";
-    FAIL_GOTO(actual_parse(data, template, cur_line, confTuples,
+    FAIL_GOTO(actual_parse(template, cur_line, confTuples,
                            sizeof(confTuples) / sizeof(struct tuple_t)) < 0,
               err);
   }
 
-  cur_line = find_label(template, data->label);
+  cur_line = find_label(template, data.label);
   if (cur_line >= 0)
   {
-    FAIL_GOTO(actual_parse(data, template, cur_line, confTuples,
+    FAIL_GOTO(actual_parse(template, cur_line, confTuples,
                            sizeof(confTuples) / sizeof(struct tuple_t)) < 0,
               err);
   }
   else
   {
-    ERR_NR(NOMATCH, "Cant find label \"%s\" in TEMPLATE", data->label);
+    ERR_NR(NOMATCH, "Cant find label \"%s\" in TEMPLATE", data.label);
     goto err;
   }
 
