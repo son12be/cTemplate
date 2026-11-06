@@ -42,8 +42,7 @@ destroy_data()
 }
 
 static inline int
-actual_parse(const FILE *template, int cur_line,
-             struct tuple_t *const confTuples, const unsigned int n)
+actual_parse(const FILE *template, int cur_line)
 {
   bool label_hit_pending = data.label != nullptr;
 
@@ -132,7 +131,8 @@ actual_parse(const FILE *template, int cur_line,
     }
 
     int found = 0;
-    for (unsigned int i = 0; i < n; ++i)
+    for (unsigned int i = 0; i < sizeof(confTuples) / sizeof(confTuples[0]);
+         ++i)
     {
       if (!streq(key, confTuples[i].key))
         continue;
@@ -207,17 +207,13 @@ parse_template()
   int cur_line = find_label(template, "global");
   if (cur_line >= 0)
   {
-    FAIL_GOTO(actual_parse(template, cur_line, confTuples,
-                           sizeof(confTuples) / sizeof(struct tuple_t)) < 0,
-              err);
+    FAIL_GOTO(actual_parse(template, cur_line) < 0, err);
   }
 
   cur_line = find_label(template, data.label);
   if (cur_line >= 0)
   {
-    FAIL_GOTO(actual_parse(template, cur_line, confTuples,
-                           sizeof(confTuples) / sizeof(struct tuple_t)) < 0,
-              err);
+    FAIL_GOTO(actual_parse(template, cur_line) < 0, err);
   }
   else
   {
